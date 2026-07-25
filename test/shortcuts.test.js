@@ -60,6 +60,20 @@ reset();
 key({ key: 'ArrowLeft', code: 'ArrowLeft', altKey: true });
 check('Alt+ArrowLeft -> 上一题', last() === 'b-prev', `got ${last()}`);
 
+/* ---- 1b. live-site states the mock originally missed ---- */
+reset();
+check('the toolbar 播放 wins over an identical sidebar button', clicks().length === 0);
+key({ key: 'p', code: 'KeyP', altKey: true });
+check('Alt+P hits the toolbar button, not the decoy', last() === 'b-play', `got ${last()}`);
+
+// The site relabels this button to 停止 while the audio is playing.
+const playBtn = document.getElementById('b-play');
+playBtn.textContent = '停止';
+reset();
+key({ key: 'p', code: 'KeyP', altKey: true });
+check('Alt+P still works when 播放 has become 停止', last() === 'b-play', `got ${last()}`);
+playBtn.textContent = '▶ 播放';
+
 /* ---- 2. Alt+A must stay free for Immersive Translate ---- */
 reset();
 const altA = key({ key: 'a', code: 'KeyA', altKey: true });
@@ -204,16 +218,21 @@ setTimeout(() => {
       /* ---- 15. picker re-teaches a renamed button ---- */
       const play = document.getElementById('b-play');
       play.textContent = '🔊 Listen again';
+      // Take the sidebar decoy out of the running too, so nothing at all
+      // matches and we are testing the picker rather than the fallback.
+      document.getElementById('b-decoy-play').textContent = '侧边栏';
+
       reset();
       answer.focus();
       key({ key: 'p', code: 'KeyP', altKey: true });
-      check('renamed play button is no longer matched', clicks().length === 0);
+      check('renamed play button is no longer matched', clicks().length === 0, JSON.stringify(clicks()));
 
       key({ key: 'k', code: 'KeyK', altKey: true });
       check('Alt+K opens the picker', document.querySelector('.ynwac-sc-picker').dataset.show === '1');
       key({ key: '1', code: 'Digit1' });
+      reset();
       click(play);
-      check('picking a button does not fire it', clicks().length === 0);
+      check('picking a button does not fire it', clicks().length === 0, JSON.stringify(clicks()));
 
       reset();
       key({ key: 'p', code: 'KeyP', altKey: true });

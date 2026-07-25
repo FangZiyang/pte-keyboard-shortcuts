@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.1.0
+// @version      1.1.1
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -96,9 +96,11 @@
     {
       id: 'play',
       kind: 'click',
-      name: 'Play / replay audio',
-      cn: '播放录音',
-      labels: ['播放', '重播', '再听一次', 'play', 'replay', 'play audio'],
+      name: 'Play / stop audio',
+      cn: '播放 / 停止',
+      // The site swaps this button's label to 停止 while the audio is
+      // playing, so the same key has to match both states.
+      labels: ['播放', '停止', '暂停', '重播', '停止播放', '再听一次', 'play', 'stop', 'pause', 'replay'],
       deny: ['播放列表', 'playlist', '自动播放', 'autoplay', '倍速'],
     },
     {
@@ -159,6 +161,11 @@
 
   const CLICKABLE = 'button, [role="button"], input[type="button"], input[type="submit"], a[href]';
 
+  // The practice toolbar carries a semantic class of its own. Matching text
+  // still does the real work — this is a tie-breaker that keeps us inside
+  // the question controls and away from lookalikes elsewhere on the page.
+  const TOOLBAR = '.pte-toolbar-btn';
+
   /**
    * Exact matches outrank fuzzy ones, so "重置" wins over "重置进度".
    */
@@ -190,6 +197,8 @@
           else if (text.includes(l)) score = Math.max(score, 20);
         }
       }
+      if (score && el.closest(TOOLBAR)) score += 5;
+
       if (score > bestScore) {
         bestScore = score;
         best = el;

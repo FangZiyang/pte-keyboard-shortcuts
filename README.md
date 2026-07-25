@@ -64,7 +64,7 @@ These work **while you are typing in the answer box** — that is the whole poin
 | --- | --- |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next question |
-| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放 Play / replay audio |
+| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放 Play / 停止 Stop |
 | <kbd>Alt</kbd> + <kbd>S</kbd> | 提交 Submit |
 | <kbd>Alt</kbd> + <kbd>R</kbd> | 重置 Reset this question |
 | <kbd>Alt</kbd> + <kbd>N</kbd> or <kbd>Alt</kbd> + <kbd>→</kbd> | 下一题 Next |
@@ -128,7 +128,9 @@ Settings persist in `localStorage` per browser.
 
 ## If a shortcut says "button not found"
 
-The script finds buttons by their visible label (`播放`, `提交`, `重置`, `下一题`, `上一题`, `跳转`), because the site ships hashed CSS class names — the text is the only stable handle. If the site renames a button, or a question type uses a different word, re-teach it:
+The script finds buttons by their visible label (`播放`/`停止`, `提交`, `重置`, `下一题`, `上一题`, `跳转`), preferring ones inside the site's `.pte-toolbar-btn` question toolbar so a lookalike elsewhere on the page can't win. Note that 播放 relabels itself to **停止** while audio is playing — the same key matches both.
+
+If the site renames a button, or a question type uses a different word, re-teach it:
 
 1. Press <kbd>Alt</kbd>+<kbd>K</kbd>.
 2. Press the number of the action you want to fix.
@@ -206,7 +208,9 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 ### 找不到按钮怎么办
 
-脚本靠按钮上的文字（`播放`/`提交`/`重置`/`下一题`/`上一题`/`跳转`）定位，因为网站的 CSS 类名是构建时哈希的，文字是唯一稳定的标识。如果网站改了文案，按 <kbd>Alt</kbd>+<kbd>K</kbd> → 按数字选动作 → 点页面上对应的按钮重新绑定即可（这一下点击会被拦截，不会真的触发按钮）。<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> 清除自定义绑定。
+脚本靠按钮上的文字（`播放`/`停止`、`提交`、`重置`、`下一题`、`上一题`、`跳转`）定位，并优先选择网站题目工具栏 `.pte-toolbar-btn` 里的按钮，避免误伤页面上同名的其他按钮。注意播放中该按钮会变成 **停止**，同一个键两种状态都能匹配。
+
+如果网站改了文案，按 <kbd>Alt</kbd>+<kbd>K</kbd> → 按数字选动作 → 点页面上对应的按钮重新识别即可（这一下点击会被拦截，不会真的触发按钮）。面板里的 **恢复默认** 可清除所有自定义。
 
 ### 安全说明
 

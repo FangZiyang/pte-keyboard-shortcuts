@@ -1,21 +1,26 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>WFD mock</title>
+<title>WFD toolbar fixture</title>
 <style>body{font:14px system-ui;padding:20px} button{margin:4px;padding:8px 14px} aside{float:right}</style>
+
+<!-- Sidebar. 重置进度 wipes ALL practice progress and must never be matched.
+     The 播放 decoy checks the toolbar wins a tie on identical text. -->
 <aside>
   <button id="b-progress">查看完整进度</button>
   <button id="b-resetall">重置进度</button>
+  <button id="b-decoy-play">播放</button>
 </aside>
+
 <h3>Question #60 Write From Dictation (高频)</h3>
 <textarea id="answer" placeholder="请输入听到的句子..." rows="4" cols="60"></textarea>
 <div>
-  <button id="b-play">▶ 播放</button>
-  <button id="b-submit">提交</button>
-  <button id="b-reset">⟳ 重置</button>
+  <button id="b-play" class="pte-toolbar-btn pte-toolbar-btn--secondary">▶ 播放</button>
+  <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary">提交</button>
+  <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
   <input id="b-num" placeholder="#" size="4">
-  <button id="b-jump">跳转</button>
-  <button id="b-prev">← 上一题</button>
-  <button id="b-next">下一题 →</button>
+  <button id="b-jump" class="pte-toolbar-btn pte-toolbar-btn--secondary">跳转</button>
+  <button id="b-prev" class="pte-toolbar-btn pte-toolbar-btn--secondary">← 上一题</button>
+  <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
 </div>
 <script>
   window.__clicks = [];
