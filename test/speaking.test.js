@@ -30,27 +30,54 @@ const clicks = () => window.__clicks;
 const last = () => window.__clicks[window.__clicks.length - 1];
 const reset = () => { window.__clicks.length = 0; };
 
-/* ---- the same 1-5 as everywhere else ---- */
-for (const [digit, id] of [['1', 'b-play'], ['2', 'b-submit'], ['3', 'b-reset'], ['4', 'b-prev'], ['5', 'b-next']]) {
+/* ---- 1-5 on a speaking question: 听 → 说 → 看分 → 下一题 ---- */
+for (const [digit, id, what] of [
+  ['1', 'b-play', '播放'],
+  ['2', 'b-record', '停止录音'],
+  ['3', 'b-ai', 'AI 评分'],
+  ['4', 'b-rerecord', '重录'],
+  ['5', 'b-next', '下一题'],
+]) {
   reset();
   key({ key: digit, code: `Digit${digit}`, altKey: true });
-  check(`Alt+${digit} -> ${id.replace('b-', '')}`, last() === id, `got ${last()}`);
+  check(`Alt+${digit} -> ${what}`, last() === id, `got ${last()}`);
 }
 
-/* ---- icon-only controls, found by component class ---- */
+/* ---- 提交 is useless here and gives up its number ---- */
 reset();
-key({ key: '6', code: 'Digit6', altKey: true });
-check('Alt+6 -> 录音 (icon-only, no text node)', last() === 'b-record', `got ${last()}`);
+key({ key: '2', code: 'Digit2', altKey: true });
+check('Alt+2 does not submit on a speaking question', !clicks().includes('b-submit'), `got ${last()}`);
+
+/* ---- letter alternates keep their original meaning everywhere ---- */
+reset();
+key({ key: 's', code: 'KeyS', altKey: true });
+check('Alt+S still submits', last() === 'b-submit', `got ${last()}`);
 
 reset();
-key({ key: '7', code: 'Digit7', altKey: true });
-check('Alt+7 -> 跳过准备', last() === 'b-skip', `got ${last()}`);
+key({ key: 'r', code: 'KeyR', altKey: true });
+check('Alt+R still resets the question', last() === 'b-reset', `got ${last()}`);
 
-/* ---- the two 重置 buttons must not be confused ---- */
 reset();
-key({ key: '3', code: 'Digit3', altKey: true });
-check('Alt+3 resets the question, not the recording', last() === 'b-reset', `got ${last()}`);
-check('the recorder 重置 was not clicked', !clicks().includes('b-rerecord'));
+key({ key: 'b', code: 'KeyB', altKey: true });
+check('Alt+B still goes to the previous question', last() === 'b-prev', `got ${last()}`);
+
+/* ---- icon-only controls keep their own direct keys too ---- */
+for (const [digit, id, what] of [
+  ['6', 'b-record', '录音'],
+  ['7', 'b-skip', '跳过准备'],
+  ['8', 'b-ai', 'AI 评分'],
+  ['9', 'b-rerecord', '重录'],
+]) {
+  reset();
+  key({ key: digit, code: `Digit${digit}`, altKey: true });
+  check(`Alt+${digit} -> ${what}`, last() === id, `got ${last()}`);
+}
+
+/* ---- the three 重置-ish buttons must never be confused ---- */
+reset();
+key({ key: '4', code: 'Digit4', altKey: true });
+check('Alt+4 re-records, it does not wipe the question', last() === 'b-rerecord', `got ${last()}`);
+check('the toolbar 重置 was not clicked', !clicks().includes('b-reset'));
 check('重置进度 was never clicked', !clicks().includes('b-resetall'));
 
 /* ---- play must be the player, not the recorder ---- */
@@ -60,14 +87,16 @@ check('Alt+1 is the player, not the mic', last() === 'b-play' && !clicks().inclu
 
 /* ---- no answer box here, so bare digits are live immediately ---- */
 reset();
-key({ key: '6', code: 'Digit6' });
-check('bare 6 records (no text field to type into)', last() === 'b-record', `got ${last()}`);
+key({ key: '3', code: 'Digit3' });
+check('bare 3 scores (no text field to type into)', last() === 'b-ai', `got ${last()}`);
 
 /* ---- chips ---- */
 window.dispatchEvent(new window.Event('resize'));
 setTimeout(() => {
   const chips = [...document.querySelectorAll('.ynwac-sc-chip')].map((c) => c.textContent);
-  check('chips cover all seven controls', ['1', '2', '3', '4', '5', '6', '7'].every((k) => chips.includes(k)), chips.join(' '));
+  check('chips cover 1-5 plus 跳过准备', ['1', '2', '3', '4', '5', '7'].every((k) => chips.includes(k)), chips.join(' '));
+  check('提交 gets no chip at all here', !chips.includes('S'), chips.join(' '));
+  check('the lenders fall back to their letter', chips.includes('R') && chips.includes('B'), chips.join(' '));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

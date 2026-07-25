@@ -2,9 +2,9 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.3.0
-// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse. Rebindable keys, on-button hints.
-// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题。快捷键可自定义，按钮上直接显示提示。
+// @version      1.4.0
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Rebindable keys, on-button hints.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -74,8 +74,11 @@
    * nothing shifts under your fingers when 提交 disappears on a question
    * you have already submitted. Letters are kept as alternates.
    *
-   * Alt+1-8 is free on Windows and macOS Chrome (tab switching there is
-   * Ctrl/Cmd+1-8). On Linux Chrome, Alt+1-8 does switch tabs — rebind if
+   * On speaking questions the middle three point elsewhere — see
+   * SPEAKING_SLOTS below.
+   *
+   * Alt+1-9 is free on Windows and macOS Chrome (tab switching there is
+   * Ctrl/Cmd+1-9). On Linux Chrome, Alt+1-9 does switch tabs — rebind if
    * that is you.
    */
   const DEFAULT_BINDINGS = {
@@ -84,10 +87,12 @@
     reset: ['alt+3', 'alt+r'],
     prev: ['alt+4', 'alt+b', 'alt+arrowleft'],
     next: ['alt+5', 'alt+enter', 'alt+n', 'alt+arrowright'],
-    // Speaking questions (RA, RS) only — absent elsewhere, so 6 and 7
-    // simply do nothing on Write From Dictation.
+    // Speaking questions (RA, RS) only — absent elsewhere, so 6-9 simply
+    // do nothing on Write From Dictation.
     record: ['alt+6'],
     skipPrep: ['alt+7'],
+    aiScore: ['alt+8'],
+    rerecord: ['alt+9'],
     focusAnswer: ['alt+i'],
     focusJump: ['alt+j'],
   };
@@ -101,6 +106,8 @@
     next: ['5', 'n', 'arrowright'],
     record: ['6'],
     skipPrep: ['7'],
+    aiScore: ['8'],
+    rerecord: ['9'],
     focusAnswer: ['i'],
     focusJump: ['j'],
   };
@@ -182,10 +189,51 @@
       labels: ['跳过准备', '跳过', 'skip', 'skip preparation'],
       deny: [],
     },
+    {
+      id: 'aiScore',
+      kind: 'click',
+      name: 'AI-score this take',
+      cn: 'AI 评分',
+      selectors: ['.pte-rec-pill__submit'],
+      // The button also reads 「AI未开通」 on accounts without the feature,
+      // so match that too rather than reporting "button not found".
+      labels: ['ai评分', 'ai打分', 'ai批改', 'ai未开通', '评分', 'ai score'],
+      deny: ['评分标准', '评分说明', '历史评分'],
+    },
+    {
+      id: 'rerecord',
+      kind: 'click',
+      name: 'Discard the take and record again',
+      cn: '重录',
+      // Icon-only, with title="重置" — the class is what keeps this apart
+      // from the toolbar's 重置 (wipe the whole question).
+      selectors: ['.pte-rec-pill__reset'],
+      labels: ['重录', '重新录音', 're-record', 'record again'],
+      deny: ['重置进度', '重置全部', '重置所有', '重置本题'],
+      exactOnly: true,
+    },
     { id: 'focusAnswer', kind: 'focus', name: 'Focus the answer box', cn: '光标到答题框' },
     { id: 'focusJump', kind: 'focus', name: 'Focus the # box', cn: '光标到题号框' },
   ];
   const actionById = (id) => ACTIONS.find((a) => a.id === id);
+
+  /* ------------------------------------------------------------------ *
+   * Speaking questions borrow the middle of the number row
+   *
+   * RA and RS have no answer box and nothing worth 提交-ing — the loop is
+   * 听 → 说 → 看分 → 下一题. So whenever the recorder pill is on the page,
+   * slots 2/3/4 point at the recorder's own controls instead:
+   *
+   *   播放 1   停止录音 2   AI 评分 3   重录 4   下一题 5
+   *
+   * Only each slot's PRIMARY key moves, so rebinding a slot carries the
+   * swap with it. The alternates keep their original meaning everywhere
+   * (Alt+S 提交, Alt+R 重置本题, Alt+B 上一题) — nothing is lost, and the
+   * toolbar keys still work on a speaking question if you want them.
+   * ------------------------------------------------------------------ */
+  const SPEAKING_SLOTS = { submit: 'record', reset: 'aiScore', prev: 'rerecord' };
+  const speakingMode = () => Array.from(document.querySelectorAll('.pte-rec-pill')).some(isVisible);
+  const slotAction = (id) => (speakingMode() && SPEAKING_SLOTS[id]) || id;
 
   /* ------------------------------------------------------------------ *
    * Finding buttons by their visible label
@@ -371,13 +419,19 @@
   /* ------------------------------------------------------------------ *
    * Dispatch
    * ------------------------------------------------------------------ */
+  // Index 0 is the slot's primary key and is subject to the speaking-mode
+  // swap; the alternates behind it always mean what they say.
   function actionForCombo(c, typing) {
     for (const id of Object.keys(bindings)) {
-      if ((bindings[id] || []).includes(c)) return id;
+      const i = (bindings[id] || []).indexOf(c);
+      if (i === 0) return slotAction(id);
+      if (i > 0) return id;
     }
     if (!typing && CONFIG.quickKeys && !/\+/.test(c)) {
       for (const id of Object.keys(quickKeys)) {
-        if ((quickKeys[id] || []).includes(c)) return id;
+        const i = (quickKeys[id] || []).indexOf(c);
+        if (i === 0) return slotAction(id);
+        if (i > 0) return id;
       }
     }
     return null;
@@ -495,6 +549,29 @@
    * ------------------------------------------------------------------ */
   let hintLayer = null;
 
+  /**
+   * Which key to draw on a button right now.
+   *
+   * While typing you need the modifier combo; once you have left the box
+   * the single key works, so show whichever one applies. In speaking mode
+   * the borrowed controls show the number that actually fires them, the
+   * slots that lent it fall back to their alternate, and 提交 — useless on
+   * RA/RS — gets no chip at all.
+   */
+  function hintKey(actionId, typing) {
+    const at = (id, i) => {
+      const list = (typing || !CONFIG.quickKeys ? bindings[id] : quickKeys[id]) || [];
+      return list[i] || (i === 0 ? (bindings[id] || [])[0] : null) || null;
+    };
+    if (!speakingMode()) return at(actionId, 0);
+
+    const lender = Object.keys(SPEAKING_SLOTS).find((k) => SPEAKING_SLOTS[k] === actionId);
+    if (lender) return at(lender, 0);
+    if (actionId === 'submit') return null;
+    if (SPEAKING_SLOTS[actionId]) return at(actionId, 1);
+    return at(actionId, 0);
+  }
+
   function refreshHints() {
     if (!CONFIG.showHints || !CONFIG.enabled) {
       if (hintLayer) hintLayer.innerHTML = '';
@@ -513,10 +590,7 @@
       const el = findTarget(action.id);
       if (!el) continue;
 
-      // While typing you need the modifier combo; once you have left the
-      // box the single key works, so show whichever one applies now.
-      const list = typing || !CONFIG.quickKeys ? bindings[action.id] : quickKeys[action.id];
-      const key = (list && list[0]) || (bindings[action.id] || [])[0];
+      const key = hintKey(action.id, typing);
       if (!key) continue;
 
       const r = el.getBoundingClientRect();
@@ -551,16 +625,39 @@
   const captureState = { active: false, onKey: () => {} };
 
   function bindingRows() {
+    // The same three number keys mean something else on RA/RS. Say so in
+    // both rows, or this table quietly lies on speaking questions.
+    const lenderOf = (id) => Object.keys(SPEAKING_SLOTS).find((k) => SPEAKING_SLOTS[k] === id);
+
     return ACTIONS.map((a) => {
       const g = (bindings[a.id] || []).map((k) => `<kbd>${pretty(k)}</kbd>`).join(' ') || '<i>—</i>';
       const q = (quickKeys[a.id] || []).map((k) => `<kbd>${pretty(k)}</kbd>`).join(' ') || '<i>—</i>';
+
+      const borrower = SPEAKING_SLOTS[a.id];
+      const lender = lenderOf(a.id);
+      let swap = '';
+      if (borrower) swap = `<em>口语题上首键 → ${actionById(borrower).cn}</em>`;
+      else if (lender) swap = `<em>口语题上 ${pretty((quickKeys[lender] || [])[0] || (bindings[lender] || [])[0])} 也走这里</em>`;
+
       return `<tr>
-        <td class="ynwac-sc-act">${a.cn}<span>${a.name}</span></td>
+        <td class="ynwac-sc-act">${a.cn}<span>${a.name}</span>${swap}</td>
         <td>${g}</td>
         <td class="ynwac-sc-q">${q}</td>
         <td><button type="button" class="ynwac-sc-rebind" data-act="${a.id}">改键 Rebind</button></td>
       </tr>`;
     }).join('');
+  }
+
+  // The five number slots as they read on a speaking question, in order.
+  function speakingStrip() {
+    const cells = ['play', 'submit', 'reset', 'prev', 'next']
+      .map((slot) => {
+        const key = (quickKeys[slot] || [])[0] || (bindings[slot] || [])[0];
+        return key ? `<kbd>${pretty(key)}</kbd> ${actionById(SPEAKING_SLOTS[slot] || slot).cn}` : '';
+      })
+      .filter(Boolean)
+      .join(' · ');
+    return `<div class="ynwac-sc-speak"><b>口语题 RA / RS</b> — 数字键在这里是<br>${cells}</div>`;
   }
 
   function panelHTML() {
@@ -574,6 +671,7 @@
           <tr><th>动作 Action</th><th>打字时 While typing</th><th>不打字时 Single key</th><th></th></tr>
           ${bindingRows()}
         </table>
+        ${speakingStrip()}
         <div class="ynwac-sc-fixed">
           <kbd>Esc</kbd> 离开输入框 leave the box ·
           <kbd>${pretty('alt+h')}</kbd> 按钮提示 button hints ·
@@ -770,6 +868,10 @@
 .ynwac-sc-table td{padding:6px 8px;vertical-align:middle;border-top:1px solid #f1f5f9}
 .ynwac-sc-act{line-height:1.25}
 .ynwac-sc-act span{display:block;font-size:11px;color:#6b7280}
+.ynwac-sc-act em{display:block;margin-top:2px;font-style:normal;font-size:11px;color:#2563eb}
+.ynwac-sc-speak{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eff6ff;
+  font-size:12px;color:#1e3a8a;line-height:2}
+.ynwac-sc-speak b{font-size:12px}
 .ynwac-sc-q{opacity:.75}
 .ynwac-sc-card kbd{display:inline-block;padding:2px 7px;border-radius:6px;border:1px solid #d1d5db;border-bottom-width:2px;
   background:#f9fafb;font:600 12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#111827}
