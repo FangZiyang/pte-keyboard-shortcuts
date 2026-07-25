@@ -50,6 +50,12 @@ Other things to check:
 
 ---
 
+## You don't have to memorize anything
+
+The key sits **on the button**. A small blue chip is drawn on 播放 / 提交 / 重置 / 上一题 / 下一题, and it follows the page as you scroll.
+
+It also changes with context: while your cursor is in the answer box it shows `Alt+P`, and the moment you leave the box it shows just `P`, because that's what works right then. Toggle the chips with <kbd>Alt</kbd>+<kbd>H</kbd>.
+
 ## Shortcuts
 
 These work **while you are typing in the answer box** — that is the whole point.
@@ -58,7 +64,7 @@ These work **while you are typing in the answer box** — that is the whole poin
 | --- | --- |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next question |
-| <kbd>Alt</kbd> + <kbd>A</kbd> or <kbd>Alt</kbd> + <kbd>P</kbd> | 播放 Play / replay audio |
+| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放 Play / replay audio |
 | <kbd>Alt</kbd> + <kbd>S</kbd> | 提交 Submit |
 | <kbd>Alt</kbd> + <kbd>R</kbd> | 重置 Reset this question |
 | <kbd>Alt</kbd> + <kbd>N</kbd> or <kbd>Alt</kbd> + <kbd>→</kbd> | 下一题 Next |
@@ -66,20 +72,28 @@ These work **while you are typing in the answer box** — that is the whole poin
 | <kbd>Alt</kbd> + <kbd>I</kbd> | Put the cursor back in the answer box |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | Jump to a question number (`#` field) |
 | <kbd>Esc</kbd> | Leave the answer box |
-| <kbd>Alt</kbd> + <kbd>/</kbd> | Open / close the help panel |
+
+And the controls:
+
+| Keys | |
+| --- | --- |
+| <kbd>Alt</kbd> + <kbd>/</kbd> | Panel — see and change every key |
+| <kbd>Alt</kbd> + <kbd>H</kbd> | Show / hide the chips on the buttons |
+| <kbd>Alt</kbd> + <kbd>0</kbd> | Master on/off for every shortcut |
+| <kbd>Alt</kbd> + <kbd>K</kbd> | Re-teach the script a renamed button |
 
 ### Single-key mode
 
 Once you press <kbd>Esc</kbd> (or click outside the text box), plain letters work — no modifier needed:
 
-<kbd>P</kbd> play · <kbd>S</kbd> submit · <kbd>R</kbd> reset · <kbd>N</kbd> next · <kbd>B</kbd> previous · <kbd>I</kbd> back to the answer box · <kbd>?</kbd> help
+<kbd>P</kbd> play · <kbd>S</kbd> submit · <kbd>R</kbd> reset · <kbd>N</kbd> next · <kbd>B</kbd> previous · <kbd>I</kbd> back to the answer box · <kbd>?</kbd> panel
 
-Turn this off in the help panel if it gets in your way.
+Turn this off in the panel if it gets in your way.
 
 ### A typical loop
 
 ```
-Alt+A        listen
+Alt+P        listen
              type the sentence
 Ctrl+Enter   submit, read your score
 Alt+Enter    next question — cursor lands in the answer box automatically
@@ -87,11 +101,26 @@ Alt+Enter    next question — cursor lands in the answer box automatically
 
 ---
 
+## Clashing with another extension?
+
+**Immersive Translate (沉浸式翻译) uses <kbd>Alt</kbd>+<kbd>A</kbd> by default**, so this script deliberately leaves that key alone — play is <kbd>Alt</kbd>+<kbd>P</kbd>.
+
+If something else on your machine still collides, rebind it — the script cannot win a key fight on its own, because extension content scripts listen in an isolated world where a page script's `preventDefault()` can't reach them. Avoiding the key is the only real fix.
+
+1. <kbd>Alt</kbd>+<kbd>/</kbd> to open the panel
+2. **改键 / Rebind** on the row you want
+3. Press the new key combination
+
+It's saved immediately. Rebinding replaces the old primary key rather than adding to it, so the clashing one actually goes away. If you press a key that another action already owns, it's taken off that action — a key only ever means one thing. **恢复默认 / Reset to defaults** puts everything back.
+
+Nuclear option: <kbd>Alt</kbd>+<kbd>0</kbd> switches every shortcut off and on. The panel still opens while they're off, so you can't lock yourself out.
+
 ## Options
 
-Open the help panel with <kbd>Alt</kbd>+<kbd>/</kbd> and toggle:
+In the panel (<kbd>Alt</kbd>+<kbd>/</kbd>):
 
-- **Auto-focus the answer box after navigating** — on by default, so you can start typing right after <kbd>Alt</kbd>+<kbd>Enter</kbd>.
+- **Key hints on buttons** — the blue chips. On by default.
+- **Auto-focus the answer box after navigating** — on by default, so you can type right after <kbd>Alt</kbd>+<kbd>Enter</kbd>.
 - **Single-key shortcuts** — on by default.
 - **Toast** — the small confirmation in the corner.
 
@@ -105,7 +134,7 @@ The script finds buttons by their visible label (`播放`, `提交`, `重置`, `
 2. Press the number of the action you want to fix.
 3. Click that button on the page. The click is intercepted, not passed through — it will not fire the button.
 
-Your bindings are saved locally. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> clears them.
+The label is saved locally. **恢复默认 / Reset to defaults** in the panel clears everything you've customised.
 
 ## Notes on safety
 
@@ -139,7 +168,7 @@ Your bindings are saved locally. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> cl
 | --- | --- |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 |
-| <kbd>Alt</kbd> + <kbd>A</kbd> / <kbd>Alt</kbd> + <kbd>P</kbd> | 播放录音 |
+| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放录音 |
 | <kbd>Alt</kbd> + <kbd>S</kbd> | 提交 |
 | <kbd>Alt</kbd> + <kbd>R</kbd> | 重置本题 |
 | <kbd>Alt</kbd> + <kbd>N</kbd> / <kbd>Alt</kbd> + <kbd>→</kbd> | 下一题 |
@@ -149,7 +178,29 @@ Your bindings are saved locally. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> cl
 | <kbd>Esc</kbd> | 退出输入框 |
 | <kbd>Alt</kbd> + <kbd>/</kbd> | 打开/关闭帮助面板 |
 
-**单键模式**：按 <kbd>Esc</kbd> 退出输入框后，直接按 <kbd>P</kbd> 播放、<kbd>S</kbd> 提交、<kbd>R</kbd> 重置、<kbd>N</kbd> 下一题、<kbd>B</kbd> 上一题、<kbd>I</kbd> 回到输入框、<kbd>?</kbd> 帮助。不习惯可以在帮助面板里关掉。
+**单键模式**：按 <kbd>Esc</kbd> 退出输入框后，直接按 <kbd>P</kbd> 播放、<kbd>S</kbd> 提交、<kbd>R</kbd> 重置、<kbd>N</kbd> 下一题、<kbd>B</kbd> 上一题、<kbd>I</kbd> 回到输入框、<kbd>?</kbd> 帮助。不习惯可以在面板里关掉。
+
+### 记不住快捷键？不用记
+
+按键提示直接画在按钮上：播放 / 提交 / 重置 / 上一题 / 下一题 上都有一个蓝色小标签，跟着页面滚动。光标在输入框里时显示 `Alt+P`，离开输入框后自动变成 `P`——显示的永远是当下能用的那个键。<kbd>Alt</kbd>+<kbd>H</kbd> 开关提示。
+
+### 和翻译插件冲突？
+
+**沉浸式翻译默认占用 <kbd>Alt</kbd>+<kbd>A</kbd>**，所以本脚本特意不用这个键，播放是 <kbd>Alt</kbd>+<kbd>P</kbd>。
+
+如果还有别的冲突，直接改键即可。脚本抢不过插件——扩展的内容脚本运行在独立环境里，页面脚本的 `preventDefault()` 拦不住它，只能换键：
+
+1. <kbd>Alt</kbd>+<kbd>/</kbd> 打开面板
+2. 点对应那行的 **改键 Rebind**
+3. 按下你想用的组合键
+
+立即保存。改键是**替换**原来的主键而不是叠加，所以冲突的那个键会真的被释放；如果按的键已被别的动作占用，会自动从那个动作上解绑——一个键只对应一个功能。**恢复默认** 可以一键还原。
+
+实在不行：<kbd>Alt</kbd>+<kbd>0</kbd> 是总开关，一键关掉/打开所有快捷键。关掉时面板依然能打开，不会把自己锁死。
+
+### 其他控制键
+
+<kbd>Alt</kbd>+<kbd>/</kbd> 面板 · <kbd>Alt</kbd>+<kbd>H</kbd> 按钮提示开关 · <kbd>Alt</kbd>+<kbd>0</kbd> 总开关 · <kbd>Alt</kbd>+<kbd>K</kbd> 重新识别按钮
 
 **常用节奏**：`Alt+A` 听 → 打字 → `Ctrl+Enter` 提交看分 → `Alt+Enter` 下一题（光标自动回到输入框）。
 

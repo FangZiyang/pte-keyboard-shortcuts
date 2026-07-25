@@ -1,6 +1,6 @@
 {
   "name": "pte-keyboard-shortcuts",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Keyboard shortcuts for PTE practice sites. Currently supports ynwac.com PTE-CORE.",
   "license": "MIT",
   "author": "FangZiyang",
