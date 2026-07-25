@@ -54,24 +54,35 @@ Other things to check:
 
 The key sits **on the button**. A small blue chip is drawn on 播放 / 提交 / 重置 / 上一题 / 下一题, and it follows the page as you scroll.
 
-It also changes with context: while your cursor is in the answer box it shows `Alt+P`, and the moment you leave the box it shows just `P`, because that's what works right then. Toggle the chips with <kbd>Alt</kbd>+<kbd>H</kbd>.
+It also changes with context: while your cursor is in the answer box it shows `Alt+1`, and the moment you leave the box it shows just `1`, because that's what works right then. Toggle the chips with <kbd>Alt</kbd>+<kbd>H</kbd>.
 
 ## Shortcuts
 
 These work **while you are typing in the answer box** — that is the whole point.
 
+**1 – 5 run left to right along the toolbar**, in the order the buttons sit on screen:
+
+```
+   播放       提交       重置              上一题     下一题
+  Alt+1      Alt+2      Alt+3             Alt+4     Alt+5
+```
+
 | Keys | Action |
 | --- | --- |
+| <kbd>Alt</kbd> + <kbd>1</kbd> | 播放 Play / 停止 Stop |
+| <kbd>Alt</kbd> + <kbd>2</kbd> | 提交 Submit |
+| <kbd>Alt</kbd> + <kbd>3</kbd> | 重置 Reset this question |
+| <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 Previous |
+| <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 Next |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit |
-| <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next question |
-| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放 Play / 停止 Stop |
-| <kbd>Alt</kbd> + <kbd>S</kbd> | 提交 Submit |
-| <kbd>Alt</kbd> + <kbd>R</kbd> | 重置 Reset this question |
-| <kbd>Alt</kbd> + <kbd>N</kbd> or <kbd>Alt</kbd> + <kbd>→</kbd> | 下一题 Next |
-| <kbd>Alt</kbd> + <kbd>B</kbd> or <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 Previous |
+| <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | Put the cursor back in the answer box |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | Jump to a question number (`#` field) |
 | <kbd>Esc</kbd> | Leave the answer box |
+
+The number belongs to the **action**, not to the button's position — so nothing shifts under your fingers when 提交 vanishes on a question you've already submitted.
+
+Letters still work as alternates if you prefer mnemonics: <kbd>Alt</kbd>+<kbd>P</kbd> play, <kbd>Alt</kbd>+<kbd>S</kbd> submit, <kbd>Alt</kbd>+<kbd>R</kbd> reset, <kbd>Alt</kbd>+<kbd>B</kbd>/<kbd>N</kbd> prev/next, plus <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>.
 
 And the controls:
 
@@ -84,19 +95,17 @@ And the controls:
 
 ### Single-key mode
 
-Once you press <kbd>Esc</kbd> (or click outside the text box), plain letters work — no modifier needed:
-
-<kbd>P</kbd> play · <kbd>S</kbd> submit · <kbd>R</kbd> reset · <kbd>N</kbd> next · <kbd>B</kbd> previous · <kbd>I</kbd> back to the answer box · <kbd>?</kbd> panel
+Once you press <kbd>Esc</kbd> (or click outside the text box), drop the <kbd>Alt</kbd> — bare <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd> do the same five things, and <kbd>I</kbd> puts you back in the answer box. Letters <kbd>P</kbd> <kbd>S</kbd> <kbd>R</kbd> <kbd>B</kbd> <kbd>N</kbd> work too.
 
 Turn this off in the panel if it gets in your way.
 
 ### A typical loop
 
 ```
-Alt+P        listen
+Alt+1        listen
              type the sentence
-Ctrl+Enter   submit, read your score
-Alt+Enter    next question — cursor lands in the answer box automatically
+Alt+2        submit, read your score
+Alt+5        next question — cursor lands in the answer box automatically
 ```
 
 ---
@@ -166,21 +175,34 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 下面这些**在输入框里打字时也能用**：
 
+**1–5 按工具栏从左到右排列**，跟按钮在屏幕上的顺序一致：
+
+```
+   播放       提交       重置              上一题     下一题
+  Alt+1      Alt+2      Alt+3             Alt+4     Alt+5
+```
+
 | 按键 | 动作 |
 | --- | --- |
+| <kbd>Alt</kbd> + <kbd>1</kbd> | 播放 / 停止 |
+| <kbd>Alt</kbd> + <kbd>2</kbd> | 提交 |
+| <kbd>Alt</kbd> + <kbd>3</kbd> | 重置本题 |
+| <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 |
+| <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 |
-| <kbd>Alt</kbd> + <kbd>P</kbd> | 播放录音 |
-| <kbd>Alt</kbd> + <kbd>S</kbd> | 提交 |
-| <kbd>Alt</kbd> + <kbd>R</kbd> | 重置本题 |
-| <kbd>Alt</kbd> + <kbd>N</kbd> / <kbd>Alt</kbd> + <kbd>→</kbd> | 下一题 |
-| <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | 光标回到答题框 |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | 光标到题号框（`#`） |
 | <kbd>Esc</kbd> | 退出输入框 |
-| <kbd>Alt</kbd> + <kbd>/</kbd> | 打开/关闭帮助面板 |
+| <kbd>Alt</kbd> + <kbd>/</kbd> | 打开/关闭面板 |
 
-**单键模式**：按 <kbd>Esc</kbd> 退出输入框后，直接按 <kbd>P</kbd> 播放、<kbd>S</kbd> 提交、<kbd>R</kbd> 重置、<kbd>N</kbd> 下一题、<kbd>B</kbd> 上一题、<kbd>I</kbd> 回到输入框、<kbd>?</kbd> 帮助。不习惯可以在面板里关掉。
+数字绑定的是**动作**而不是按钮的位置，所以做完提交、`提交` 按钮消失时，其他键不会跟着挪位。
+
+习惯字母的话，<kbd>Alt</kbd>+<kbd>P</kbd> 播放、<kbd>Alt</kbd>+<kbd>S</kbd> 提交、<kbd>Alt</kbd>+<kbd>R</kbd> 重置、<kbd>Alt</kbd>+<kbd>B</kbd>/<kbd>N</kbd> 上/下一题、<kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> 也都保留可用。
+
+**单键模式**：按 <kbd>Esc</kbd> 退出输入框后，不用按 Alt，直接 <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd> 就是同样五个动作，<kbd>I</kbd> 回到输入框（字母 <kbd>P</kbd> <kbd>S</kbd> <kbd>R</kbd> <kbd>B</kbd> <kbd>N</kbd> 同样可用）。不习惯可以在面板里关掉。
+
+> Windows / macOS 的 Chrome 里 <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>8</kbd> 是空闲的（切标签页用的是 Ctrl/⌘）。Linux 版 Chrome 用 Alt+数字切标签页，遇到冲突改键即可。
 
 ### 记不住快捷键？不用记
 

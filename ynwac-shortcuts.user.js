@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.1.1
+// @version      1.2.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -65,23 +65,36 @@
    * be rebound from the help panel (Alt+/) if it clashes with something
    * else you have installed.
    * ------------------------------------------------------------------ */
+  /*
+   * 1-5 run left to right along the toolbar:
+   *
+   *   播放 1   提交 2   重置 3   …   上一题 4   下一题 5
+   *
+   * The number belongs to the action, not to the button's position, so
+   * nothing shifts under your fingers when 提交 disappears on a question
+   * you have already submitted. Letters are kept as alternates.
+   *
+   * Alt+1-8 is free on Windows and macOS Chrome (tab switching there is
+   * Ctrl/Cmd+1-8). On Linux Chrome, Alt+1-8 does switch tabs — rebind if
+   * that is you.
+   */
   const DEFAULT_BINDINGS = {
-    play: ['alt+p'],
-    submit: ['mod+enter', 'alt+s'],
-    reset: ['alt+r'],
-    next: ['alt+enter', 'alt+n', 'alt+arrowright'],
-    prev: ['alt+b', 'alt+arrowleft'],
+    play: ['alt+1', 'alt+p'],
+    submit: ['alt+2', 'mod+enter', 'alt+s'],
+    reset: ['alt+3', 'alt+r'],
+    prev: ['alt+4', 'alt+b', 'alt+arrowleft'],
+    next: ['alt+5', 'alt+enter', 'alt+n', 'alt+arrowright'],
     focusAnswer: ['alt+i'],
     focusJump: ['alt+j'],
   };
 
   // Single keys, live only when the cursor is not in a text field.
   const DEFAULT_QUICK = {
-    play: ['p'],
-    submit: ['s'],
-    reset: ['r'],
-    next: ['n', 'arrowright'],
-    prev: ['b', 'arrowleft'],
+    play: ['1', 'p'],
+    submit: ['2', 's'],
+    reset: ['3', 'r'],
+    prev: ['4', 'b', 'arrowleft'],
+    next: ['5', 'n', 'arrowright'],
     focusAnswer: ['i'],
     focusJump: ['j'],
   };
@@ -122,14 +135,8 @@
       deny: ['重置进度', '重置全部', '重置所有', '重置密码', 'reset progress', 'reset all', 'reset password'],
       exactOnly: true,
     },
-    {
-      id: 'next',
-      kind: 'click',
-      name: 'Next question',
-      cn: '下一题',
-      labels: ['下一题', '下一个', '下一句', 'next', 'next question'],
-      deny: ['下一页', 'next page'],
-    },
+    // Listed in toolbar order so the panel and the picker's 1-N numbering
+    // read the same way the buttons do.
     {
       id: 'prev',
       kind: 'click',
@@ -137,6 +144,14 @@
       cn: '上一题',
       labels: ['上一题', '上一个', '上一句', 'prev', 'previous', 'previous question'],
       deny: ['上一页', 'previous page'],
+    },
+    {
+      id: 'next',
+      kind: 'click',
+      name: 'Next question',
+      cn: '下一题',
+      labels: ['下一题', '下一个', '下一句', 'next', 'next question'],
+      deny: ['下一页', 'next page'],
     },
     { id: 'focusAnswer', kind: 'focus', name: 'Focus the answer box', cn: '光标到答题框' },
     { id: 'focusJump', kind: 'focus', name: 'Focus the # box', cn: '光标到题号框' },

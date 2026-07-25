@@ -60,6 +60,14 @@ reset();
 key({ key: 'ArrowLeft', code: 'ArrowLeft', altKey: true });
 check('Alt+ArrowLeft -> 上一题', last() === 'b-prev', `got ${last()}`);
 
+/* ---- 1a. the number row, left to right along the toolbar ---- */
+const NUMBERED = [['1', 'b-play'], ['2', 'b-submit'], ['3', 'b-reset'], ['4', 'b-prev'], ['5', 'b-next']];
+for (const [digit, id] of NUMBERED) {
+  reset();
+  key({ key: digit, code: `Digit${digit}`, altKey: true });
+  check(`Alt+${digit} -> ${id.replace('b-', '')}`, last() === id, `got ${last()}`);
+}
+
 /* ---- 1b. live-site states the mock originally missed ---- */
 reset();
 check('the toolbar 播放 wins over an identical sidebar button', clicks().length === 0);
@@ -125,14 +133,22 @@ window.dispatchEvent(new window.Event('resize'));
 
 setTimeout(() => {
   const typingChips = chips();
-  check('hint chips render while typing', typingChips.includes('Alt+P') && typingChips.includes('Alt+R'), typingChips.join(' '));
+  check(
+    'chips show the numbers while typing',
+    ['Alt+1', 'Alt+2', 'Alt+3', 'Alt+4', 'Alt+5'].every((k) => typingChips.includes(k)),
+    typingChips.join(' ')
+  );
 
   answer.blur();
   window.dispatchEvent(new window.Event('resize'));
 
   setTimeout(() => {
     const idleChips = chips();
-    check('chips switch to single keys once you leave the box', idleChips.includes('P') && idleChips.includes('R'), idleChips.join(' '));
+    check(
+      'chips drop the modifier once you leave the box',
+      ['1', '2', '3', '4', '5'].every((k) => idleChips.includes(k)),
+      idleChips.join(' ')
+    );
 
     /* ---- 9. rebinding through the panel ---- */
     key({ key: '/', code: 'Slash', altKey: true });
@@ -155,8 +171,12 @@ setTimeout(() => {
     check('rebound Alt+Y -> 播放', last() === 'b-play', `got ${last()}`);
 
     reset();
-    const oldKey = key({ key: 'p', code: 'KeyP', altKey: true });
-    check('old Alt+P is released after rebinding', clicks().length === 0 && !oldKey.defaultPrevented);
+    const oldKey = key({ key: '1', code: 'Digit1', altKey: true });
+    check('the replaced primary Alt+1 is released', clicks().length === 0 && !oldKey.defaultPrevented);
+
+    reset();
+    key({ key: 'p', code: 'KeyP', altKey: true });
+    check('the Alt+P alternate survives rebinding', last() === 'b-play', `got ${last()}`);
 
     check(
       'rebinding persists to localStorage',
