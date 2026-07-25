@@ -1,11 +1,21 @@
-# YNWAC PTE-CORE Keyboard Shortcuts
+# PTE Keyboard Shortcuts
 
-[![test](https://github.com/FangZiyang/ynwac-wfd-shortcuts/actions/workflows/test.yml/badge.svg)](https://github.com/FangZiyang/ynwac-wfd-shortcuts/actions/workflows/test.yml)
+[![test](https://github.com/FangZiyang/pte-keyboard-shortcuts/actions/workflows/test.yml/badge.svg)](https://github.com/FangZiyang/pte-keyboard-shortcuts/actions/workflows/test.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Keyboard shortcuts for the practice pages on [ynwac.com](https://ynwac.com) — **Write From Dictation (`/wfd`)** and the other question types that share the same button row.
+Drive PTE practice sites from the keyboard instead of the mouse.
 
-Doing WFD means hitting **播放 → type → 提交 → 重置/下一题** over and over. Reaching for the mouse between every question is the slow part. This userscript wires those buttons to the keyboard so your hands never leave the answer box.
+PTE practice is the same loop a few hundred times a night — **play the audio → answer → submit → next question**. Reaching for the mouse between every question is the slow part. This userscript wires that button row to the keyboard so your hands never leave the answer box.
+
+**Supported sites**
+
+| Site | Status |
+| --- | --- |
+| [ynwac.com](https://ynwac.com) PTE-CORE | ✅ [`ynwac-shortcuts.user.js`](ynwac-shortcuts.user.js) |
+
+Each site gets its own script — the shortcuts stay the same, only the button-matching differs. PRs adding a site are welcome.
+
+**Question types.** Built against **Write From Dictation** (`/wfd`), but the script finds buttons by their label rather than by page, so any question type using the same 播放 / 提交 / 重置 / 下一题 row works already. Types with their own controls — the recording buttons on Read Aloud and Repeat Sentence — are not wired up yet.
 
 > 中文说明见下方 [中文](#中文说明)。
 
@@ -15,10 +25,28 @@ Doing WFD means hitting **播放 → type → 提交 → 重置/下一题** over
 
 1. Install a userscript manager — [Tampermonkey](https://www.tampermonkey.net/) (Chrome / Edge / Firefox / Safari) or [Violentmonkey](https://violentmonkey.github.io/).
 2. Click to install the script:
-   **[ynwac-shortcuts.user.js](https://raw.githubusercontent.com/FangZiyang/ynwac-wfd-shortcuts/main/ynwac-shortcuts.user.js)**
+   **[ynwac-shortcuts.user.js](https://raw.githubusercontent.com/FangZiyang/pte-keyboard-shortcuts/main/ynwac-shortcuts.user.js)**
 3. Open <https://ynwac.com/wfd>, log in, and press <kbd>Alt</kbd>+<kbd>/</kbd> to see the shortcut list.
 
 Tampermonkey will offer updates automatically from this repo.
+
+### Nothing happens after installing?
+
+**On Chrome, this is almost always the MV3 user-scripts switch.** Since Chrome 120, Tampermonkey cannot run *any* userscript until you turn it on — and it fails silently, with no error anywhere:
+
+1. Go to `chrome://extensions`
+2. Tampermonkey → **Details**
+3. Turn on **Allow User Scripts**
+
+(On older Chrome builds the equivalent is the **Developer mode** toggle in the top-right of `chrome://extensions`.)
+
+Then reload the practice page. You should see a toast in the bottom-right the first time it runs.
+
+Other things to check:
+
+- Clicking the raw `.user.js` link shows a page of source code instead of an install prompt → the userscript manager isn't installed or isn't handling `.user.js` links.
+- Tampermonkey's dashboard shows the script as **enabled**, and the page you're on matches `https://ynwac.com/*`.
+- Still stuck? Open DevTools (<kbd>F12</kbd>) → Console on the practice page and run `Object.keys(localStorage).filter(k => k.startsWith('ynwac-shortcuts'))`. An empty array means the script never ran — an install problem, not a shortcut problem.
 
 ---
 
@@ -89,14 +117,18 @@ Your bindings are saved locally. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> cl
 
 ## 中文说明
 
-给 [ynwac.com](https://ynwac.com) 的练习页面（主要是 **WFD `/wfd`**，其他共用同一排按钮的题型也适用）加键盘快捷键。
+用键盘操作 PTE 刷题网站，不用再够鼠标。
 
-WFD 的流程就是 **播放 → 打字 → 提交 → 重置/下一题** 一直循环，每题都要去够鼠标实在太慢。这个油猴脚本把这几个按钮绑到键盘上，手不用离开输入框。
+刷题就是 **播放 → 作答 → 提交 → 下一题** 循环几百遍，每题都要去点鼠标实在太慢。这个油猴脚本把这排按钮绑到键盘上，手不用离开输入框。
+
+**已支持的网站**：[ynwac.com](https://ynwac.com) PTE-CORE（[`ynwac-shortcuts.user.js`](ynwac-shortcuts.user.js)）。每个网站一个脚本，快捷键相同，只是按钮识别不同，欢迎 PR 添加新站点。
+
+**题型**：以 **WFD `/wfd`** 为基础开发，但脚本是按按钮文字识别而不是按页面，所以任何用同一排 播放 / 提交 / 重置 / 下一题 按钮的题型都能直接用。RA、RS 这类有独立录音控件的题型还没有接入。
 
 ### 安装
 
 1. 装 [Tampermonkey](https://www.tampermonkey.net/) 或 [Violentmonkey](https://violentmonkey.github.io/)。
-2. 点这个链接安装：**[ynwac-shortcuts.user.js](https://raw.githubusercontent.com/FangZiyang/ynwac-wfd-shortcuts/main/ynwac-shortcuts.user.js)**
+2. 点这个链接安装：**[ynwac-shortcuts.user.js](https://raw.githubusercontent.com/FangZiyang/pte-keyboard-shortcuts/main/ynwac-shortcuts.user.js)**
 3. 打开 <https://ynwac.com/wfd> 登录后，按 <kbd>Alt</kbd>+<kbd>/</kbd> 查看快捷键列表。
 
 ### 快捷键

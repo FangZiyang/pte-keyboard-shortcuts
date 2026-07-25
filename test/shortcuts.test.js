@@ -103,10 +103,18 @@ answer.focus();
 key({ key: 'ß', code: 'KeyS', altKey: true });
 check('macOS Option+S still submits (uses e.code)', last() === 'b-submit', `got ${last()}`);
 
-/* ---- 6. IME composition must be ignored ---- */
+/* ---- 6. IME composition ---- */
 reset();
-key({ key: 'r', code: 'KeyR', altKey: true, isComposing: true });
-check('keys during IME composition are ignored', clicks().length === 0);
+answer.blur();
+key({ key: 'r', code: 'KeyR', isComposing: true });
+check('bare keys during IME composition are ignored', clicks().length === 0);
+
+// Some IMEs report keyCode 229 for every keydown while active. A modifier
+// combo is never part of a composition, so it must still fire.
+reset();
+answer.focus();
+key({ key: 'r', code: 'KeyR', altKey: true, keyCode: 229 });
+check('Alt+R still works with a Chinese IME active', last() === 'b-reset', `got ${last()}`);
 
 /* ---- 7. help panel ---- */
 key({ key: '/', code: 'Slash', altKey: true });

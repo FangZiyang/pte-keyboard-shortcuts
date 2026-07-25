@@ -1,13 +1,13 @@
 {
-  "name": "ynwac-wfd-shortcuts",
-  "version": "1.0.0",
-  "description": "Keyboard shortcuts for ynwac.com PTE-CORE practice pages (Write From Dictation and friends).",
+  "name": "pte-keyboard-shortcuts",
+  "version": "1.0.2",
+  "description": "Keyboard shortcuts for PTE practice sites. Currently supports ynwac.com PTE-CORE.",
   "license": "MIT",
   "author": "FangZiyang",
-  "homepage": "https://github.com/FangZiyang/ynwac-wfd-shortcuts",
+  "homepage": "https://github.com/FangZiyang/pte-keyboard-shortcuts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FangZiyang/ynwac-wfd-shortcuts.git"
+    "url": "https://github.com/FangZiyang/pte-keyboard-shortcuts.git"
   },
   "keywords": ["userscript", "tampermonkey", "pte", "pte-core", "wfd", "keyboard-shortcuts", "ynwac"],
   "scripts": {

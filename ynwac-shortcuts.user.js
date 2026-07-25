@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         YNWAC PTE-CORE Keyboard Shortcuts
-// @name:zh-CN   YNWAC PTE-CORE 键盘快捷键
-// @namespace    https://github.com/FangZiyang/ynwac-wfd-shortcuts
-// @version      1.0.0
-// @description  Play / Submit / Reset / Next on ynwac.com practice pages (WFD and friends) without touching the mouse.
-// @description:zh-CN  在 ynwac.com 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，不用再点鼠标。
+// @name         PTE Keyboard Shortcuts — YNWAC
+// @name:zh-CN   PTE 键盘快捷键 — YNWAC
+// @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
+// @version      1.0.2
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages (WFD and friends) without touching the mouse.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，不用再点鼠标。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -12,10 +12,10 @@
 // @run-at       document-idle
 // @grant        none
 // @license      MIT
-// @homepageURL  https://github.com/FangZiyang/ynwac-wfd-shortcuts
-// @supportURL   https://github.com/FangZiyang/ynwac-wfd-shortcuts/issues
-// @downloadURL  https://raw.githubusercontent.com/FangZiyang/ynwac-wfd-shortcuts/main/ynwac-shortcuts.user.js
-// @updateURL    https://raw.githubusercontent.com/FangZiyang/ynwac-wfd-shortcuts/main/ynwac-shortcuts.user.js
+// @homepageURL  https://github.com/FangZiyang/pte-keyboard-shortcuts
+// @supportURL   https://github.com/FangZiyang/pte-keyboard-shortcuts/issues
+// @downloadURL  https://raw.githubusercontent.com/FangZiyang/pte-keyboard-shortcuts/main/ynwac-shortcuts.user.js
+// @updateURL    https://raw.githubusercontent.com/FangZiyang/pte-keyboard-shortcuts/main/ynwac-shortcuts.user.js
 // ==/UserScript==
 
 (function () {
@@ -339,10 +339,13 @@
   document.addEventListener(
     'keydown',
     (e) => {
-      // Mid-composition in a Chinese/Japanese IME — hands off.
-      if (e.isComposing || e.keyCode === 229) return;
-
       const key = combo(e);
+      const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
+
+      // Mid-composition in a Chinese/Japanese IME — hands off. Only for bare
+      // keys: some IMEs report keyCode 229 for everything while active, and a
+      // modifier combo is never part of a composition.
+      if (!hasModifier && (e.isComposing || e.keyCode === 229)) return;
 
       if (pickerState.active) {
         if (pickerState.handleKey(e, key)) {
@@ -372,7 +375,7 @@
       }
 
       if (!CONFIG.quickKeys || isTyping() || helpOpen) return;
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (hasModifier) return;
 
       const quick = QUICK_KEYS[key];
       if (quick) {
