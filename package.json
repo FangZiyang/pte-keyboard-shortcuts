@@ -1,6 +1,6 @@
 {
   "name": "pte-keyboard-shortcuts",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Keyboard shortcuts for PTE practice sites. Currently supports ynwac.com PTE-CORE.",
   "license": "MIT",
   "author": "FangZiyang",
@@ -11,7 +11,7 @@
   },
   "keywords": ["userscript", "tampermonkey", "pte", "pte-core", "wfd", "keyboard-shortcuts", "ynwac"],
   "scripts": {
-    "test": "node test/shortcuts.test.js"
+    "test": "node test/shortcuts.test.js && node test/speaking.test.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"

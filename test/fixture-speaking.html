@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Read Aloud toolbar fixture</title>
+<!--
+  Read Aloud / Repeat Sentence. Both media controls are icon-only — no
+  text node at all — so they can only be found by component class.
+  The recorder also has its own 重置 (re-record), which must not steal
+  Alt+3 from the toolbar's 重置 (reset the question).
+-->
+<aside>
+  <button id="b-resetall">重置进度</button>
+</aside>
+
+<div class="pte-audio-pill pte-audio-pill--labeled">
+  <span class="pte-audio-pill__label">示范朗读</span>
+  <button id="b-play" class="pte-audio-pill__play" aria-label="播放题目原音" title="播放题目原音"><svg></svg></button>
+  <button id="b-speed" class="pte-audio-pill__speed">x1.0</button>
+</div>
+
+<div class="pte-rec-pill">
+  <div class="pte-rec-pill__main-wrap">
+    <button id="b-record" class="pte-rec-pill__main" aria-label="录音或播放" title="录音或播放"><svg></svg></button>
+  </div>
+  <button id="b-skip" class="pte-rec-pill__skip">跳过准备</button>
+  <button id="b-ai" class="pte-rec-pill__submit">AI未开通</button>
+  <button id="b-rerecord" class="pte-rec-pill__reset" title="重置"><svg></svg></button>
+</div>
+
+<div>
+  <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary">提交</button>
+  <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+  <input id="b-num" class="pte-toolbar-btn" placeholder="#" size="4">
+  <button id="b-jump" class="pte-toolbar-btn pte-toolbar-btn--secondary">跳转</button>
+  <button id="b-prev" class="pte-toolbar-btn pte-toolbar-btn--secondary">← 上一题</button>
+  <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+</script>

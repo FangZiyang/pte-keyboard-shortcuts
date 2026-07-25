@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.2.0
+// @version      1.3.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -84,6 +84,10 @@
     reset: ['alt+3', 'alt+r'],
     prev: ['alt+4', 'alt+b', 'alt+arrowleft'],
     next: ['alt+5', 'alt+enter', 'alt+n', 'alt+arrowright'],
+    // Speaking questions (RA, RS) only — absent elsewhere, so 6 and 7
+    // simply do nothing on Write From Dictation.
+    record: ['alt+6'],
+    skipPrep: ['alt+7'],
     focusAnswer: ['alt+i'],
     focusJump: ['alt+j'],
   };
@@ -95,6 +99,8 @@
     reset: ['3', 'r'],
     prev: ['4', 'b', 'arrowleft'],
     next: ['5', 'n', 'arrowright'],
+    record: ['6'],
+    skipPrep: ['7'],
     focusAnswer: ['i'],
     focusJump: ['j'],
   };
@@ -111,8 +117,10 @@
       kind: 'click',
       name: 'Play / stop audio',
       cn: '播放 / 停止',
-      // The site swaps this button's label to 停止 while the audio is
-      // playing, so the same key has to match both states.
+      // RA and RS render the player as an icon with no text at all.
+      selectors: ['.pte-audio-pill__play'],
+      // On WFD the site swaps this button's label to 停止 while the audio
+      // is playing, so the same key has to match both states.
       labels: ['播放', '停止', '暂停', '重播', '停止播放', '再听一次', 'play', 'stop', 'pause', 'replay'],
       deny: ['播放列表', 'playlist', '自动播放', 'autoplay', '倍速'],
     },
@@ -153,6 +161,27 @@
       labels: ['下一题', '下一个', '下一句', 'next', 'next question'],
       deny: ['下一页', 'next page'],
     },
+    // Speaking questions (Read Aloud, Repeat Sentence). Both controls are
+    // icon-only, so the component class is the only handle — the labels
+    // are a fallback in case the markup changes.
+    {
+      id: 'record',
+      kind: 'click',
+      name: 'Record / stop recording',
+      cn: '录音 / 停止录音',
+      selectors: ['.pte-rec-pill__main'],
+      labels: ['录音', '录音控制', '录音或播放', '开始录音', '停止录音', 'record', 'stop recording'],
+      deny: [],
+    },
+    {
+      id: 'skipPrep',
+      kind: 'click',
+      name: 'Skip the preparation countdown',
+      cn: '跳过准备',
+      selectors: ['.pte-rec-pill__skip'],
+      labels: ['跳过准备', '跳过', 'skip', 'skip preparation'],
+      deny: [],
+    },
     { id: 'focusAnswer', kind: 'focus', name: 'Focus the answer box', cn: '光标到答题框' },
     { id: 'focusJump', kind: 'focus', name: 'Focus the # box', cn: '光标到题号框' },
   ];
@@ -189,6 +218,17 @@
     if (!action || action.kind !== 'click') return null;
 
     const custom = customLabels[actionId] ? [norm(customLabels[actionId])] : [];
+
+    // A component class beats guessing at text — but never overrules a
+    // button the user pointed at themselves with the picker.
+    if (!custom.length && action.selectors) {
+      for (const sel of action.selectors) {
+        for (const el of document.querySelectorAll(sel)) {
+          if (isVisible(el) && isEnabled(el)) return el;
+        }
+      }
+    }
+
     const builtin = action.labels.map(norm).filter(Boolean);
     const deny = action.deny.map(norm).filter(Boolean);
 

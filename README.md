@@ -15,7 +15,15 @@ PTE practice is the same loop a few hundred times a night — **play the audio �
 
 Each site gets its own script — the shortcuts stay the same, only the button-matching differs. PRs adding a site are welcome.
 
-**Question types.** Built against **Write From Dictation** (`/wfd`), but the script finds buttons by their label rather than by page, so any question type using the same 播放 / 提交 / 重置 / 下一题 row works already. Types with their own controls — the recording buttons on Read Aloud and Repeat Sentence — are not wired up yet.
+**Question types**
+
+| | 1 播放 | 2 提交 | 3 重置 | 4 上一题 | 5 下一题 | 6 录音 | 7 跳过准备 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **WFD** Write From Dictation | ✅ | ✅ | ✅ | ✅ | ✅ | – | – |
+| **RA** Read Aloud | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RS** Repeat Sentence | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – |
+
+Other question types that reuse the same toolbar should work without changes — buttons are matched by what they are, not by which page you're on. A key with no button on the current page simply does nothing.
 
 > 中文说明见下方 [中文](#中文说明)。
 
@@ -74,6 +82,8 @@ These work **while you are typing in the answer box** — that is the whole poin
 | <kbd>Alt</kbd> + <kbd>3</kbd> | 重置 Reset this question |
 | <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 Previous |
 | <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 Next |
+| <kbd>Alt</kbd> + <kbd>6</kbd> | 录音 Record / stop — RA, RS |
+| <kbd>Alt</kbd> + <kbd>7</kbd> | 跳过准备 Skip the prep countdown — RA |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | Put the cursor back in the answer box |
@@ -189,6 +199,8 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 | <kbd>Alt</kbd> + <kbd>3</kbd> | 重置本题 |
 | <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 |
 | <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 |
+| <kbd>Alt</kbd> + <kbd>6</kbd> | 录音 / 停止录音（RA、RS） |
+| <kbd>Alt</kbd> + <kbd>7</kbd> | 跳过准备（RA） |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | 光标回到答题框 |
