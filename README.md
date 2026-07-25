@@ -173,7 +173,15 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 **已支持的网站**：[ynwac.com](https://ynwac.com) PTE-CORE（[`ynwac-shortcuts.user.js`](ynwac-shortcuts.user.js)）。每个网站一个脚本，快捷键相同，只是按钮识别不同，欢迎 PR 添加新站点。
 
-**题型**：以 **WFD `/wfd`** 为基础开发，但脚本是按按钮文字识别而不是按页面，所以任何用同一排 播放 / 提交 / 重置 / 下一题 按钮的题型都能直接用。RA、RS 这类有独立录音控件的题型还没有接入。
+**已支持的题型**
+
+| | 1 播放 | 2 提交 | 3 重置 | 4 上一题 | 5 下一题 | 6 录音 | 7 跳过准备 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **WFD** Write From Dictation | ✅ | ✅ | ✅ | ✅ | ✅ | – | – |
+| **RA** Read Aloud | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **RS** Repeat Sentence | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – |
+
+脚本按按钮本身识别，而不是按页面，所以其他复用同一排工具栏的题型一般也能直接用。当前页面上没有的按钮，对应的键按了不会有任何反应。
 
 ### 安装
 
