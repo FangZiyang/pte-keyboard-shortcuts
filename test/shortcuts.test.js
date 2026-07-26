@@ -60,15 +60,43 @@ reset();
 key({ key: 'ArrowLeft', code: 'ArrowLeft', altKey: true });
 check('Alt+ArrowLeft -> 上一题', last() === 'b-prev', `got ${last()}`);
 
-/* ---- 1a. the number row, left to right along the toolbar ---- */
-const NUMBERED = [['1', 'b-play'], ['2', 'b-submit'], ['3', 'b-reset'], ['4', 'b-prev'], ['5', 'b-next']];
+/* ---- 1a. the number row: the loop you actually run ---- */
+const NUMBERED = [['1', 'b-play'], ['2', 'b-submit'], ['3', 'b-reset'], ['4', 'b-next']];
 for (const [digit, id] of NUMBERED) {
   reset();
   key({ key: digit, code: `Digit${digit}`, altKey: true });
   check(`Alt+${digit} -> ${id.replace('b-', '')}`, last() === id, `got ${last()}`);
 }
 
-/* ---- 1b. live-site states the mock originally missed ---- */
+/* ---- 1b. 上一题 gave its digit up but kept its letter ---- */
+reset();
+key({ key: 'b', code: 'KeyB', altKey: true });
+check('Alt+B still reaches 上一题', last() === 'b-prev', `got ${last()}`);
+
+reset();
+key({ key: '5', code: 'Digit5', altKey: true });
+check('Alt+5 clicks nothing on WFD (重录 exists only on RA/RS)', clicks().length === 0, JSON.stringify(clicks()));
+
+/* ---- 1c. digits stay live inside the answer box ---- */
+answer.focus();
+reset();
+const digitTyped = key({ key: '1', code: 'Digit1' });
+check('bare 1 plays with the cursor still in the answer box', last() === 'b-play' && digitTyped.defaultPrevented, `got ${last()}`);
+
+reset();
+const letterTyped = key({ key: 'b', code: 'KeyB' });
+check('bare "b" is still just a letter you typed', clicks().length === 0 && !letterTyped.defaultPrevented);
+
+/* ---- 1d. the # box wins the digits back — you go there to type one ---- */
+const numBox = document.getElementById('b-num');
+numBox.focus();
+reset();
+const digitInNum = key({ key: '1', code: 'Digit1' });
+check('bare 1 reaches the # box instead of playing', clicks().length === 0 && !digitInNum.defaultPrevented);
+numBox.blur();
+answer.focus();
+
+/* ---- 1e. live-site states the mock originally missed ---- */
 reset();
 check('the toolbar 播放 wins over an identical sidebar button', clicks().length === 0);
 key({ key: 'p', code: 'KeyP', altKey: true });
@@ -134,10 +162,11 @@ window.dispatchEvent(new window.Event('resize'));
 setTimeout(() => {
   const typingChips = chips();
   check(
-    'chips show the numbers while typing',
-    ['Alt+1', 'Alt+2', 'Alt+3', 'Alt+4', 'Alt+5'].every((k) => typingChips.includes(k)),
+    'digits stay bare on the buttons while typing',
+    ['1', '2', '3', '4'].every((k) => typingChips.includes(k)),
     typingChips.join(' ')
   );
+  check('a letter-only action shows its modifier while typing', typingChips.includes('Alt+B'), typingChips.join(' '));
 
   answer.blur();
   window.dispatchEvent(new window.Event('resize'));
@@ -145,8 +174,8 @@ setTimeout(() => {
   setTimeout(() => {
     const idleChips = chips();
     check(
-      'chips drop the modifier once you leave the box',
-      ['1', '2', '3', '4', '5'].every((k) => idleChips.includes(k)),
+      'the letter drops its modifier once you leave the box',
+      ['1', '2', '3', '4', 'B'].every((k) => idleChips.includes(k)),
       idleChips.join(' ')
     );
 

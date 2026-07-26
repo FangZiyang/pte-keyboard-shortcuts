@@ -19,12 +19,16 @@ Each site gets its own script — the shortcuts stay the same, only the button-m
 
 | | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> | <kbd>4</kbd> | <kbd>5</kbd> |
 | --- | :-: | :-: | :-: | :-: | :-: |
-| **WFD** Write From Dictation | 播放 | 提交 | 重置 | 上一题 | 下一题 |
-| **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 重录 | 下一题 |
+| **WFD** Write From Dictation | 播放 | 提交 | 重置 | 下一题 | – |
+| **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
 
-Speaking questions have no answer box and nothing worth submitting — the loop there is **听 → 说 → 看分 → 下一题** — so the middle three numbers point at the recorder's own controls instead. The script switches automatically when the recorder is on the page.
+One hand, four keys, in the order you press them. <kbd>4</kbd> is 下一题 on every question type.
 
-Nothing is lost in the swap: the toolbar actions keep their letter alternates everywhere (<kbd>Alt</kbd>+<kbd>S</kbd> 提交, <kbd>Alt</kbd>+<kbd>R</kbd> 重置, <kbd>Alt</kbd>+<kbd>B</kbd> 上一题), and each recorder control also has a direct key of its own — <kbd>6</kbd> 录音, <kbd>7</kbd> 跳过准备 (RA), <kbd>8</kbd> AI 评分, <kbd>9</kbd> 重录.
+Speaking questions have no answer box and nothing worth submitting — the loop there is **听 → 说 → 看分 → 下一题** — so <kbd>2</kbd> and <kbd>3</kbd> point at the recorder's own controls instead. The script switches automatically when the recorder is on the page.
+
+Nothing is lost in the swap: the toolbar actions keep their letter alternates everywhere (<kbd>Alt</kbd>+<kbd>S</kbd> 提交, <kbd>Alt</kbd>+<kbd>R</kbd> 重置), and each recorder control also has a direct key of its own — <kbd>6</kbd> 录音, <kbd>7</kbd> 跳过准备 (RA), <kbd>8</kbd> AI 评分.
+
+**上一题 has no number.** It's a once-an-evening key, and spending a digit on it pushed 下一题 — pressed on every single question — out to <kbd>5</kbd>. It still answers to <kbd>Alt</kbd>+<kbd>B</kbd> and <kbd>Alt</kbd>+<kbd>←</kbd>.
 
 Other question types that reuse the same toolbar should work without changes — buttons are matched by what they are, not by which page you're on. A key with no button on the current page simply does nothing.
 
@@ -65,46 +69,48 @@ Other things to check:
 
 The key sits **on the button**. A small blue chip is drawn on every control the script can reach, and it follows the page as you scroll.
 
-It also changes with context: while your cursor is in the answer box it shows `Alt+1`, and the moment you leave the box it shows just `1`, because that's what works right then. On a speaking question the chips move with the swap — `2` sits on the recorder, `3` on AI 评分 — so the button always tells you the key that actually fires it. Toggle the chips with <kbd>Alt</kbd>+<kbd>H</kbd>.
+It also changes with context. On a speaking question the chips move with the swap — `2` sits on the recorder, `3` on AI 评分 — so the button always tells you the key that actually fires it. Toggle the chips with <kbd>Alt</kbd>+<kbd>H</kbd>.
 
 ## Shortcuts
 
-These work **while you are typing in the answer box** — that is the whole point.
-
-**1 – 5 run left to right along the toolbar**, in the order the buttons sit on screen:
+**You do not need the <kbd>Alt</kbd> key.** Bare <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> work everywhere, *including while you are typing the answer* — a dictated sentence is words, not numerals, so the digits are free. The one exception is the `#` box: you go there precisely to type a number, so the digits reach the field instead.
 
 ```
-   播放       提交       重置              上一题     下一题
-  Alt+1      Alt+2      Alt+3             Alt+4     Alt+5
+   播放       提交       重置       下一题
+     1          2          3          4
 ```
 
-On a speaking question the same five keys follow the recorder instead:
+On a speaking question the same keys follow the recorder instead:
 
 ```
-   播放     停止录音     AI 评分      重录      下一题
-  Alt+1      Alt+2       Alt+3      Alt+4     Alt+5
+   播放     停止录音     AI 评分     下一题      重录
+     1          2          3          4          5
 ```
 
 | Keys | Action | On RA / RS |
 | --- | --- | --- |
-| <kbd>Alt</kbd> + <kbd>1</kbd> | 播放 Play / 停止 Stop | same |
-| <kbd>Alt</kbd> + <kbd>2</kbd> | 提交 Submit | **停止录音** Stop recording |
-| <kbd>Alt</kbd> + <kbd>3</kbd> | 重置 Reset this question | **AI 评分** AI-score the take |
-| <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 Previous | **重录** Record again |
-| <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 Next | same |
-| <kbd>Alt</kbd> + <kbd>6</kbd> | 录音 Record / stop — RA, RS | |
-| <kbd>Alt</kbd> + <kbd>7</kbd> | 跳过准备 Skip the prep countdown — RA | |
-| <kbd>Alt</kbd> + <kbd>8</kbd> | AI 评分 AI-score the take — RA, RS | |
-| <kbd>Alt</kbd> + <kbd>9</kbd> | 重录 Record again — RA, RS | |
+| <kbd>1</kbd> | 播放 Play / 停止 Stop | same |
+| <kbd>2</kbd> | 提交 Submit | **停止录音** Stop recording |
+| <kbd>3</kbd> | 重置 Reset this question | **AI 评分** AI-score the take |
+| <kbd>4</kbd> | 下一题 Next | same |
+| <kbd>5</kbd> | — | **重录** Record again |
+| <kbd>6</kbd> | 录音 Record / stop — RA, RS | |
+| <kbd>7</kbd> | 跳过准备 Skip the prep countdown — RA | |
+| <kbd>8</kbd> | AI 评分 AI-score the take — RA, RS | |
+| <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 Previous | |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit | |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next | |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | Put the cursor back in the answer box | |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | Jump to a question number (`#` field) | |
 | <kbd>Esc</kbd> | Leave the answer box | |
 
+Every digit above also works as <kbd>Alt</kbd>+digit — that combo is never swallowed by a text field, so it's the reliable one if you've turned the bare digits off.
+
 The number belongs to the **action**, not to the button's position — so nothing shifts under your fingers when 提交 vanishes on a question you've already submitted.
 
-Letters still work as alternates if you prefer mnemonics: <kbd>Alt</kbd>+<kbd>P</kbd> play, <kbd>Alt</kbd>+<kbd>S</kbd> submit, <kbd>Alt</kbd>+<kbd>R</kbd> reset, <kbd>Alt</kbd>+<kbd>B</kbd>/<kbd>N</kbd> prev/next, plus <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>. **The letters never move** — only each slot's first key is swapped on speaking questions, so <kbd>Alt</kbd>+<kbd>S</kbd> still submits on RS if you ever need it.
+Letters work as alternates if you prefer mnemonics: <kbd>Alt</kbd>+<kbd>P</kbd> play, <kbd>Alt</kbd>+<kbd>S</kbd> submit, <kbd>Alt</kbd>+<kbd>R</kbd> reset, <kbd>Alt</kbd>+<kbd>B</kbd>/<kbd>N</kbd> prev/next, plus <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>. **The letters never move** — only each slot's first key is swapped on speaking questions, so <kbd>Alt</kbd>+<kbd>S</kbd> still submits on RS if you ever need it.
+
+> **If a sentence really does contain a numeral**, open the panel (<kbd>Alt</kbd>+<kbd>/</kbd>) and untick **打字时数字键也生效**. Pressing <kbd>Esc</kbd> will not help — that frees up *more* keys, not fewer.
 
 And the controls:
 
@@ -115,24 +121,28 @@ And the controls:
 | <kbd>Alt</kbd> + <kbd>0</kbd> | Master on/off for every shortcut |
 | <kbd>Alt</kbd> + <kbd>K</kbd> | Re-teach the script a renamed button |
 
-### Single-key mode
+### What the bare keys do where
 
-Once you press <kbd>Esc</kbd> (or click outside the text box), drop the <kbd>Alt</kbd> — bare <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd> do the same five things, and <kbd>I</kbd> puts you back in the answer box. Letters <kbd>P</kbd> <kbd>S</kbd> <kbd>R</kbd> <kbd>B</kbd> <kbd>N</kbd> work too.
+| Cursor is… | Digits | Letters |
+| --- | --- | --- |
+| Nowhere (RA/RS, or after <kbd>Esc</kbd>) | live | live |
+| In the answer box | **live** | typed |
+| In the `#` box | typed | typed |
 
-RA and RS have no answer box to type into, so the bare digits are live there from the moment the page loads — <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd>, no modifier, all the way through a session.
+Letters step aside as soon as you're typing — <kbd>b</kbd> in the middle of a sentence is a letter, not 上一题 — so use <kbd>Alt</kbd>+<kbd>B</kbd> there. Digits are the ones that stay. Both fall back to their <kbd>Alt</kbd> form, and the chip on the button always shows whichever one currently works.
 
-Turn this off in the panel if it gets in your way.
+Turn either off in the panel if it gets in your way.
 
 ### A typical loop
 
 ```
-WFD                                    RS / RA
-Alt+1   listen                         Alt+1   listen
-        type the sentence                      speak
-Alt+2   submit, read your score        Alt+2   stop recording
-                                       Alt+3   AI score
-                                       Alt+4   not happy? record again
-Alt+5   next question                  Alt+5   next question
+WFD                              RS / RA
+1   listen                       1   listen
+    type the sentence                speak
+2   submit, read your score      2   stop recording
+                                 3   AI score
+                                 5   not happy? record again
+4   next question                4   next question
 ```
 
 After 下一题 the cursor lands back in the answer box automatically on question types that have one.
@@ -160,9 +170,12 @@ In the panel (<kbd>Alt</kbd>+<kbd>/</kbd>):
 - **Key hints on buttons** — the blue chips. On by default.
 - **Auto-focus the answer box after navigating** — on by default, so you can type right after <kbd>Alt</kbd>+<kbd>Enter</kbd>.
 - **Single-key shortcuts** — on by default.
+- **打字时数字键也生效 / digits stay live inside the answer box** — on by default. Untick it for a question whose answer contains a numeral. The `#` box is always exempt.
 - **Toast** — the small confirmation in the corner.
 
 Settings persist in `localStorage` per browser.
+
+> **Upgrading from 1.4.x or earlier resets your rebinds once.** The number row changed shape in 1.5.0 (下一题 moved to <kbd>4</kbd>), and merging an old saved set would have left half the row pointing at the previous meaning. Options and re-taught button labels are kept.
 
 ## If a shortcut says "button not found"
 
@@ -181,7 +194,7 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 ## Notes on safety
 
 - **Reset only ever matches the exact label `重置`.** The sidebar has a `重置进度` ("reset all progress") button, and no fuzzy match is allowed to reach it.
-- **重录 and 重置 are kept apart.** The recorder's own re-record button is icon-only with `title="重置"`, so it's matched by class, never by that text — <kbd>4</kbd> re-records, it cannot wipe the question, and neither can reach 重置进度.
+- **重录 and 重置 are kept apart.** The recorder's own re-record button is icon-only with `title="重置"`, so it's matched by class, never by that text — <kbd>5</kbd> re-records, it cannot wipe the question, and neither can reach 重置进度.
 - The script only reads and clicks what is already on the page. No network requests, no data collection, no `@grant`ed privileges — `@grant none` means it runs in the page like any other script.
 - It never touches your login or account settings.
 
@@ -199,12 +212,16 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 | | <kbd>1</kbd> | <kbd>2</kbd> | <kbd>3</kbd> | <kbd>4</kbd> | <kbd>5</kbd> |
 | --- | :-: | :-: | :-: | :-: | :-: |
-| **WFD** Write From Dictation | 播放 | 提交 | 重置 | 上一题 | 下一题 |
-| **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 重录 | 下一题 |
+| **WFD** Write From Dictation | 播放 | 提交 | 重置 | 下一题 | – |
+| **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
 
-口语题没有答题框，也没什么好提交的，节奏是 **听 → 说 → 看分 → 下一题**，所以中间三个数字改成指录音条自己的控件。页面上一出现录音条就自动切换，不用手动开关。
+一只手四个键，按的顺序就是它们的顺序。<kbd>4</kbd> 在所有题型上都是下一题。
 
-原来的动作一个都没丢：工具栏动作的字母别名在所有题型上都保持原义（<kbd>Alt</kbd>+<kbd>S</kbd> 提交、<kbd>Alt</kbd>+<kbd>R</kbd> 重置本题、<kbd>Alt</kbd>+<kbd>B</kbd> 上一题），录音条的每个控件也各有自己的直达键：<kbd>6</kbd> 录音、<kbd>7</kbd> 跳过准备（RA）、<kbd>8</kbd> AI 评分、<kbd>9</kbd> 重录。
+口语题没有答题框，也没什么好提交的，节奏是 **听 → 说 → 看分 → 下一题**，所以 <kbd>2</kbd> 和 <kbd>3</kbd> 改成指录音条自己的控件。页面上一出现录音条就自动切换，不用手动开关。
+
+原来的动作一个都没丢：工具栏动作的字母别名在所有题型上都保持原义（<kbd>Alt</kbd>+<kbd>S</kbd> 提交、<kbd>Alt</kbd>+<kbd>R</kbd> 重置本题），录音条的每个控件也各有自己的直达键：<kbd>6</kbd> 录音、<kbd>7</kbd> 跳过准备（RA）、<kbd>8</kbd> AI 评分。
+
+**上一题不占数字键**。这是一晚上按不了几次的键，为它留一个数字就把每题都要按的下一题挤到了 <kbd>5</kbd>。它保留 <kbd>Alt</kbd>+<kbd>B</kbd> 和 <kbd>Alt</kbd>+<kbd>←</kbd>。
 
 脚本按按钮本身识别，而不是按页面，所以其他复用同一排工具栏的题型一般也能直接用。当前页面上没有的按钮，对应的键按了不会有任何反应。
 
@@ -216,33 +233,31 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 ### 快捷键
 
-下面这些**在输入框里打字时也能用**：
-
-**1–5 按工具栏从左到右排列**，跟按钮在屏幕上的顺序一致：
+**不用按 Alt。** 裸的 <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> 在哪儿都能用，**包括你正在答题框里打字的时候**——听写的是英文单词、不是阿拉伯数字，所以这几个键是空着的。唯一的例外是题号框（`#`）：你去那儿就是为了输数字，所以数字会正常进到框里。
 
 ```
-   播放       提交       重置              上一题     下一题
-  Alt+1      Alt+2      Alt+3             Alt+4     Alt+5
+   播放       提交       重置       下一题
+     1          2          3          4
 ```
 
-口语题上这五个键跟着录音条走：
+口语题上这几个键跟着录音条走：
 
 ```
-   播放     停止录音     AI 评分      重录      下一题
-  Alt+1      Alt+2       Alt+3      Alt+4     Alt+5
+   播放     停止录音     AI 评分     下一题      重录
+     1          2          3          4          5
 ```
 
 | 按键 | 动作 | 口语题 RA / RS |
 | --- | --- | --- |
-| <kbd>Alt</kbd> + <kbd>1</kbd> | 播放 / 停止 | 同左 |
-| <kbd>Alt</kbd> + <kbd>2</kbd> | 提交 | **停止录音** |
-| <kbd>Alt</kbd> + <kbd>3</kbd> | 重置本题 | **AI 评分** |
-| <kbd>Alt</kbd> + <kbd>4</kbd> | 上一题 | **重录** |
-| <kbd>Alt</kbd> + <kbd>5</kbd> | 下一题 | 同左 |
-| <kbd>Alt</kbd> + <kbd>6</kbd> | 录音 / 停止录音（RA、RS） | |
-| <kbd>Alt</kbd> + <kbd>7</kbd> | 跳过准备（RA） | |
-| <kbd>Alt</kbd> + <kbd>8</kbd> | AI 评分（RA、RS） | |
-| <kbd>Alt</kbd> + <kbd>9</kbd> | 重录（RA、RS） | |
+| <kbd>1</kbd> | 播放 / 停止 | 同左 |
+| <kbd>2</kbd> | 提交 | **停止录音** |
+| <kbd>3</kbd> | 重置本题 | **AI 评分** |
+| <kbd>4</kbd> | 下一题 | 同左 |
+| <kbd>5</kbd> | — | **重录** |
+| <kbd>6</kbd> | 录音 / 停止录音（RA、RS） | |
+| <kbd>7</kbd> | 跳过准备（RA） | |
+| <kbd>8</kbd> | AI 评分（RA、RS） | |
+| <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 | |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 | |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 | |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | 光标回到答题框 | |
@@ -250,17 +265,29 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 | <kbd>Esc</kbd> | 退出输入框 | |
 | <kbd>Alt</kbd> + <kbd>/</kbd> | 打开/关闭面板 | |
 
+上表每个数字也都能加 Alt 用（<kbd>Alt</kbd>+<kbd>1</kbd> 等）。Alt 组合永远不会被输入框吞掉，所以如果你把裸数字关了，用它最稳。
+
 数字绑定的是**动作**而不是按钮的位置，所以做完提交、`提交` 按钮消失时，其他键不会跟着挪位。
 
 习惯字母的话，<kbd>Alt</kbd>+<kbd>P</kbd> 播放、<kbd>Alt</kbd>+<kbd>S</kbd> 提交、<kbd>Alt</kbd>+<kbd>R</kbd> 重置、<kbd>Alt</kbd>+<kbd>B</kbd>/<kbd>N</kbd> 上/下一题、<kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> 也都保留可用。**字母永远不换位**——口语题只换每个槽位的第一个键，所以在 RS 上真要提交，<kbd>Alt</kbd>+<kbd>S</kbd> 照样能用。改键也一样：把 2 改成别的键，那个键在口语题上就跟着变成停止录音。
 
-**单键模式**：按 <kbd>Esc</kbd> 退出输入框后，不用按 Alt，直接 <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> <kbd>5</kbd> 就是同样五个动作，<kbd>I</kbd> 回到输入框（字母 <kbd>P</kbd> <kbd>S</kbd> <kbd>R</kbd> <kbd>B</kbd> <kbd>N</kbd> 同样可用）。RA、RS 没有答题框，裸数字从进页面就一直有效，全程不用按 Alt。不习惯可以在面板里关掉。
+**裸键在哪儿有效**
+
+| 光标在 | 数字 | 字母 |
+| --- | --- | --- |
+| 没在任何输入框（RA/RS，或按了 <kbd>Esc</kbd>） | 有效 | 有效 |
+| 答题框里 | **有效** | 正常输入 |
+| 题号框里 | 正常输入 | 正常输入 |
+
+字母一进输入框就让位——句子中间的 <kbd>b</kbd> 是个字母，不是上一题——所以在那儿要用 <kbd>Alt</kbd>+<kbd>B</kbd>。留下的是数字。两者都能退回 Alt 组合，按钮上的小标签永远显示当下真正管用的那个。不习惯可以在面板里分别关掉。
+
+> **万一某句听写真的含阿拉伯数字**，按 <kbd>Alt</kbd>+<kbd>/</kbd> 打开面板，取消勾选 **打字时数字键也生效**。按 <kbd>Esc</kbd> 没用——那只会让*更多*键变成快捷键。
 
 > Windows / macOS 的 Chrome 里 <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>8</kbd> 是空闲的（切标签页用的是 Ctrl/⌘）。Linux 版 Chrome 用 Alt+数字切标签页，遇到冲突改键即可。
 
 ### 记不住快捷键？不用记
 
-按键提示直接画在按钮上：每个能操作的按钮上都有一个蓝色小标签，跟着页面滚动。光标在输入框里时显示 `Alt+P`，离开输入框后自动变成 `P`——显示的永远是当下能用的那个键。口语题上标签也跟着换位，`2` 会画在录音按钮上、`3` 画在 AI 评分上，所以看按钮就知道按哪个键。<kbd>Alt</kbd>+<kbd>H</kbd> 开关提示。
+按键提示直接画在按钮上：每个能操作的按钮上都有一个蓝色小标签，跟着页面滚动。**标签上显示什么，你就按什么**——它跟着光标位置变：在答题框里数字标签依旧是 `4`，字母类的会变成 `Alt+B`，离开输入框后又变回 `B`。口语题上标签也跟着换位，`2` 会画在录音按钮上、`3` 画在 AI 评分上。<kbd>Alt</kbd>+<kbd>H</kbd> 开关提示。
 
 ### 和翻译插件冲突？
 
@@ -276,6 +303,8 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 实在不行：<kbd>Alt</kbd>+<kbd>0</kbd> 是总开关，一键关掉/打开所有快捷键。关掉时面板依然能打开，不会把自己锁死。
 
+> **从 1.4.x 及更早版本升级会把自定义改键重置一次。** 1.5.0 重排了数字键（下一题挪到 <kbd>4</kbd>），把旧的存档合并进来会让半排键还指着原来的动作，不如清一次干净。面板里的选项和你用 <kbd>Alt</kbd>+<kbd>K</kbd> 教过的按钮不受影响。
+
 ### 其他控制键
 
 <kbd>Alt</kbd>+<kbd>/</kbd> 面板 · <kbd>Alt</kbd>+<kbd>H</kbd> 按钮提示开关 · <kbd>Alt</kbd>+<kbd>0</kbd> 总开关 · <kbd>Alt</kbd>+<kbd>K</kbd> 重新识别按钮
@@ -288,8 +317,8 @@ WFD                       RS / RA
     打字                      开口说
 2   提交看分               2   停止录音
                           3   AI 评分
-                          4   不满意就重录
-5   下一题                 5   下一题
+                          5   不满意就重录
+4   下一题                 4   下一题
 ```
 
 WFD 切题后光标会自动回到答题框，接着打字就行。
@@ -305,7 +334,7 @@ WFD 切题后光标会自动回到答题框，接着打字就行。
 ### 安全说明
 
 - **重置只匹配完全等于 `重置` 的按钮**，侧边栏的 `重置进度`（清空全部练习进度）被显式排除，模糊匹配永远碰不到它。
-- **重录和重置分得很清**：录音条上的重录按钮是纯图标、`title="重置"`，脚本只按类名认它、绝不按这段文字认——所以 <kbd>4</kbd> 只会重录，不会清空整题，更碰不到 `重置进度`。
+- **重录和重置分得很清**：录音条上的重录按钮是纯图标、`title="重置"`，脚本只按类名认它、绝不按这段文字认——所以 <kbd>5</kbd> 只会重录，不会清空整题，更碰不到 `重置进度`。
 - 脚本只读取和点击页面上已有的元素，不发任何网络请求、不收集数据、`@grant none` 无特殊权限，也不会碰你的登录信息或账号设置。
 
 ---

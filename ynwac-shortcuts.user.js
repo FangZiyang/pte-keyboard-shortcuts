@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.4.0
+// @version      1.5.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -44,6 +44,7 @@
       autoFocusAnswer: true,
       showToast: true,
       quickKeys: true,
+      digitsWhileTyping: true, // a dictated sentence is words, not numerals
       showHints: true, // key badges drawn on the buttons themselves
     },
     load('config', {})
@@ -51,7 +52,7 @@
   const setConfig = (k, v) => {
     CONFIG[k] = v;
     save('config', CONFIG);
-    if (k === 'showHints' || k === 'enabled') refreshHints();
+    if (['showHints', 'enabled', 'quickKeys', 'digitsWhileTyping'].includes(k)) refreshHints();
   };
 
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -66,16 +67,19 @@
    * else you have installed.
    * ------------------------------------------------------------------ */
   /*
-   * 1-5 run left to right along the toolbar:
+   * 1-4 are the loop you actually run, in the order you run it:
    *
-   *   播放 1   提交 2   重置 3   …   上一题 4   下一题 5
+   *   播放 1   提交 2   重置 3   下一题 4
+   *
+   * 上一题 gets no number. It is a once-an-evening key, and spending a
+   * digit on it pushed 下一题 — pressed on every single question — out to
+   * 5. It keeps Alt+B and Alt+← .
    *
    * The number belongs to the action, not to the button's position, so
    * nothing shifts under your fingers when 提交 disappears on a question
-   * you have already submitted. Letters are kept as alternates.
+   * you have already submitted.
    *
-   * On speaking questions the middle three point elsewhere — see
-   * SPEAKING_SLOTS below.
+   * On speaking questions 2 and 3 point elsewhere — see SPEAKING_SLOTS.
    *
    * Alt+1-9 is free on Windows and macOS Chrome (tab switching there is
    * Ctrl/Cmd+1-9). On Linux Chrome, Alt+1-9 does switch tabs — rebind if
@@ -85,32 +89,46 @@
     play: ['alt+1', 'alt+p'],
     submit: ['alt+2', 'mod+enter', 'alt+s'],
     reset: ['alt+3', 'alt+r'],
-    prev: ['alt+4', 'alt+b', 'alt+arrowleft'],
-    next: ['alt+5', 'alt+enter', 'alt+n', 'alt+arrowright'],
-    // Speaking questions (RA, RS) only — absent elsewhere, so 6-9 simply
+    next: ['alt+4', 'alt+enter', 'alt+n', 'alt+arrowright'],
+    // Speaking questions (RA, RS) only — absent elsewhere, so 5-8 simply
     // do nothing on Write From Dictation.
+    rerecord: ['alt+5'],
     record: ['alt+6'],
     skipPrep: ['alt+7'],
     aiScore: ['alt+8'],
-    rerecord: ['alt+9'],
+    prev: ['alt+b', 'alt+arrowleft'],
     focusAnswer: ['alt+i'],
     focusJump: ['alt+j'],
   };
 
-  // Single keys, live only when the cursor is not in a text field.
+  // Single keys. Live whenever the cursor is not in a text field — and,
+  // for the digits, inside the answer box too. See bareKeyLive.
   const DEFAULT_QUICK = {
     play: ['1', 'p'],
     submit: ['2', 's'],
     reset: ['3', 'r'],
-    prev: ['4', 'b', 'arrowleft'],
-    next: ['5', 'n', 'arrowright'],
+    next: ['4', 'n', 'arrowright'],
+    rerecord: ['5'],
     record: ['6'],
     skipPrep: ['7'],
     aiScore: ['8'],
-    rerecord: ['9'],
+    prev: ['b', 'arrowleft'],
     focusAnswer: ['i'],
     focusJump: ['j'],
   };
+
+  /*
+   * Bumped whenever the default layout is reshuffled. A set saved under an
+   * older layout is dropped rather than merged — merging would leave half
+   * the number row pointing at the previous meaning, which is worse than
+   * losing a rebind.
+   */
+  const LAYOUT = 2;
+  if (load('layout', 1) !== LAYOUT) {
+    save('bindings', {});
+    save('quick', {});
+    save('layout', LAYOUT);
+  }
 
   let bindings = Object.assign({}, DEFAULT_BINDINGS, load('bindings', {}));
   let quickKeys = Object.assign({}, DEFAULT_QUICK, load('quick', {}));
@@ -150,16 +168,8 @@
       deny: ['重置进度', '重置全部', '重置所有', '重置密码', 'reset progress', 'reset all', 'reset password'],
       exactOnly: true,
     },
-    // Listed in toolbar order so the panel and the picker's 1-N numbering
-    // read the same way the buttons do.
-    {
-      id: 'prev',
-      kind: 'click',
-      name: 'Previous question',
-      cn: '上一题',
-      labels: ['上一题', '上一个', '上一句', 'prev', 'previous', 'previous question'],
-      deny: ['上一页', 'previous page'],
-    },
+    // Listed in key order, so the panel and the picker's 1-N numbering
+    // read the same way your fingers do.
     {
       id: 'next',
       kind: 'click',
@@ -168,9 +178,21 @@
       labels: ['下一题', '下一个', '下一句', 'next', 'next question'],
       deny: ['下一页', 'next page'],
     },
-    // Speaking questions (Read Aloud, Repeat Sentence). Both controls are
-    // icon-only, so the component class is the only handle — the labels
-    // are a fallback in case the markup changes.
+    // Speaking questions (Read Aloud, Repeat Sentence). Every one of these
+    // controls is icon-only, so the component class is the real handle —
+    // the labels are a fallback in case the markup changes.
+    {
+      id: 'rerecord',
+      kind: 'click',
+      name: 'Discard the take and record again',
+      cn: '重录',
+      // Icon-only, with title="重置" — the class is what keeps this apart
+      // from the toolbar's 重置 (wipe the whole question).
+      selectors: ['.pte-rec-pill__reset'],
+      labels: ['重录', '重新录音', 're-record', 'record again'],
+      deny: ['重置进度', '重置全部', '重置所有', '重置本题'],
+      exactOnly: true,
+    },
     {
       id: 'record',
       kind: 'click',
@@ -200,17 +222,14 @@
       labels: ['ai评分', 'ai打分', 'ai批改', 'ai未开通', '评分', 'ai score'],
       deny: ['评分标准', '评分说明', '历史评分'],
     },
+    // No number of its own — rare enough that 下一题 wanted the digit more.
     {
-      id: 'rerecord',
+      id: 'prev',
       kind: 'click',
-      name: 'Discard the take and record again',
-      cn: '重录',
-      // Icon-only, with title="重置" — the class is what keeps this apart
-      // from the toolbar's 重置 (wipe the whole question).
-      selectors: ['.pte-rec-pill__reset'],
-      labels: ['重录', '重新录音', 're-record', 'record again'],
-      deny: ['重置进度', '重置全部', '重置所有', '重置本题'],
-      exactOnly: true,
+      name: 'Previous question',
+      cn: '上一题',
+      labels: ['上一题', '上一个', '上一句', 'prev', 'previous', 'previous question'],
+      deny: ['上一页', 'previous page'],
     },
     { id: 'focusAnswer', kind: 'focus', name: 'Focus the answer box', cn: '光标到答题框' },
     { id: 'focusJump', kind: 'focus', name: 'Focus the # box', cn: '光标到题号框' },
@@ -222,16 +241,19 @@
    *
    * RA and RS have no answer box and nothing worth 提交-ing — the loop is
    * 听 → 说 → 看分 → 下一题. So whenever the recorder pill is on the page,
-   * slots 2/3/4 point at the recorder's own controls instead:
+   * slots 2 and 3 point at the recorder's own controls instead:
    *
-   *   播放 1   停止录音 2   AI 评分 3   重录 4   下一题 5
+   *   播放 1   停止录音 2   AI 评分 3   下一题 4   重录 5
+   *
+   * 4 stays 下一题 on every question type, and 5 belongs to 重录 outright —
+   * there is no such button on WFD, so nothing has to be borrowed for it.
    *
    * Only each slot's PRIMARY key moves, so rebinding a slot carries the
    * swap with it. The alternates keep their original meaning everywhere
-   * (Alt+S 提交, Alt+R 重置本题, Alt+B 上一题) — nothing is lost, and the
-   * toolbar keys still work on a speaking question if you want them.
+   * (Alt+S 提交, Alt+R 重置本题) — nothing is lost, and the toolbar keys
+   * still work on a speaking question if you want them.
    * ------------------------------------------------------------------ */
-  const SPEAKING_SLOTS = { submit: 'record', reset: 'aiScore', prev: 'rerecord' };
+  const SPEAKING_SLOTS = { submit: 'record', reset: 'aiScore' };
   const speakingMode = () => Array.from(document.querySelectorAll('.pte-rec-pill')).some(isVisible);
   const slotAction = (id) => (speakingMode() && SPEAKING_SLOTS[id]) || id;
 
@@ -419,15 +441,47 @@
   /* ------------------------------------------------------------------ *
    * Dispatch
    * ------------------------------------------------------------------ */
+  /**
+   * Where the cursor is, as far as bare keys are concerned.
+   *
+   *   'none'   — not in a field; every single key is live
+   *   'answer' — the answer box; digits stay live, letters do not
+   *   'number' — the # box and friends; nothing is live, you came here to
+   *              type a number and the digits have to reach the field
+   */
+  function typingContext() {
+    const el = document.activeElement;
+    if (!el) return 'none';
+    if (el.isContentEditable || el.tagName === 'TEXTAREA') return 'answer';
+    if (['INPUT', 'SELECT'].includes(el.tagName)) return 'number';
+    return 'none';
+  }
+  const isTyping = () => typingContext() !== 'none';
+
+  /**
+   * A dictated sentence is words, not numerals, so 1-8 can keep working
+   * mid-answer — that is the whole point of putting every action on a
+   * digit. The # box is the one place that has to win the digits back.
+   *
+   * If a sentence really does need a numeral, turn 打字时数字键也生效 off
+   * in the panel (Alt+/) — Esc will not help, it only frees up MORE keys.
+   */
+  function bareKeyLive(c) {
+    const ctx = typingContext();
+    if (ctx === 'none') return true;
+    if (ctx === 'answer') return CONFIG.digitsWhileTyping && /^[0-9]$/.test(c);
+    return false;
+  }
+
   // Index 0 is the slot's primary key and is subject to the speaking-mode
   // swap; the alternates behind it always mean what they say.
-  function actionForCombo(c, typing) {
+  function actionForCombo(c) {
     for (const id of Object.keys(bindings)) {
       const i = (bindings[id] || []).indexOf(c);
       if (i === 0) return slotAction(id);
       if (i > 0) return id;
     }
-    if (!typing && CONFIG.quickKeys && !/\+/.test(c)) {
+    if (CONFIG.quickKeys && !/\+/.test(c) && bareKeyLive(c)) {
       for (const id of Object.keys(quickKeys)) {
         const i = (quickKeys[id] || []).indexOf(c);
         if (i === 0) return slotAction(id);
@@ -435,13 +489,6 @@
       }
     }
     return null;
-  }
-
-  function isTyping() {
-    const el = document.activeElement;
-    if (!el) return false;
-    if (el.isContentEditable) return true;
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
   }
 
   document.addEventListener(
@@ -509,7 +556,7 @@
         return;
       }
 
-      const id = actionForCombo(key, isTyping());
+      const id = actionForCombo(key);
       if (id) {
         e.preventDefault();
         e.stopPropagation();
@@ -550,18 +597,19 @@
   let hintLayer = null;
 
   /**
-   * Which key to draw on a button right now.
+   * Which key to draw on a button right now — always one that works from
+   * where the cursor currently is, so the chip is never a lie. Bare `4` in
+   * the answer box, `Alt+B` there for a letter, plain `B` once you leave.
    *
-   * While typing you need the modifier combo; once you have left the box
-   * the single key works, so show whichever one applies. In speaking mode
-   * the borrowed controls show the number that actually fires them, the
-   * slots that lent it fall back to their alternate, and 提交 — useless on
-   * RA/RS — gets no chip at all.
+   * In speaking mode the borrowed controls show the number that actually
+   * fires them, the slots that lent it fall back to their alternate, and
+   * 提交 — useless on RA/RS — gets no chip at all.
    */
-  function hintKey(actionId, typing) {
+  function hintKey(actionId) {
     const at = (id, i) => {
-      const list = (typing || !CONFIG.quickKeys ? bindings[id] : quickKeys[id]) || [];
-      return list[i] || (i === 0 ? (bindings[id] || [])[0] : null) || null;
+      const quick = (quickKeys[id] || [])[i];
+      if (CONFIG.quickKeys && quick && bareKeyLive(quick)) return quick;
+      return (bindings[id] || [])[i] || null;
     };
     if (!speakingMode()) return at(actionId, 0);
 
@@ -582,7 +630,6 @@
       hintLayer.className = 'ynwac-sc-root ynwac-sc-hints';
       document.body.appendChild(hintLayer);
     }
-    const typing = isTyping();
     const frag = document.createDocumentFragment();
 
     for (const action of ACTIONS) {
@@ -590,7 +637,7 @@
       const el = findTarget(action.id);
       if (!el) continue;
 
-      const key = hintKey(action.id, typing);
+      const key = hintKey(action.id);
       if (!key) continue;
 
       const r = el.getBoundingClientRect();
@@ -650,7 +697,7 @@
 
   // The five number slots as they read on a speaking question, in order.
   function speakingStrip() {
-    const cells = ['play', 'submit', 'reset', 'prev', 'next']
+    const cells = ['play', 'submit', 'reset', 'next', 'rerecord']
       .map((slot) => {
         const key = (quickKeys[slot] || [])[0] || (bindings[slot] || [])[0];
         return key ? `<kbd>${pretty(key)}</kbd> ${actionById(SPEAKING_SLOTS[slot] || slot).cn}` : '';
@@ -682,6 +729,7 @@
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="showHints"> 在按钮上显示按键提示 / show key hints on buttons</label>
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="autoFocusAnswer"> 切题后自动聚焦答题框 / auto-focus answer box</label>
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="quickKeys"> 启用单键快捷键 / enable single-key shortcuts</label>
+        <label class="ynwac-sc-opt"><input type="checkbox" data-opt="digitsWhileTyping"> 打字时数字键也生效（题号框除外）/ digits stay live inside the answer box</label>
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="showToast"> 显示操作提示 / show toast</label>
         <div class="ynwac-sc-foot">
           <button type="button" class="ynwac-sc-reset">恢复默认 Reset to defaults</button>

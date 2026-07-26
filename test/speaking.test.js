@@ -35,8 +35,8 @@ for (const [digit, id, what] of [
   ['1', 'b-play', '播放'],
   ['2', 'b-record', '停止录音'],
   ['3', 'b-ai', 'AI 评分'],
-  ['4', 'b-rerecord', '重录'],
-  ['5', 'b-next', '下一题'],
+  ['4', 'b-next', '下一题'],
+  ['5', 'b-rerecord', '重录'],
 ]) {
   reset();
   key({ key: digit, code: `Digit${digit}`, altKey: true });
@@ -66,7 +66,6 @@ for (const [digit, id, what] of [
   ['6', 'b-record', '录音'],
   ['7', 'b-skip', '跳过准备'],
   ['8', 'b-ai', 'AI 评分'],
-  ['9', 'b-rerecord', '重录'],
 ]) {
   reset();
   key({ key: digit, code: `Digit${digit}`, altKey: true });
@@ -75,8 +74,8 @@ for (const [digit, id, what] of [
 
 /* ---- the three 重置-ish buttons must never be confused ---- */
 reset();
-key({ key: '4', code: 'Digit4', altKey: true });
-check('Alt+4 re-records, it does not wipe the question', last() === 'b-rerecord', `got ${last()}`);
+key({ key: '5', code: 'Digit5', altKey: true });
+check('Alt+5 re-records, it does not wipe the question', last() === 'b-rerecord', `got ${last()}`);
 check('the toolbar 重置 was not clicked', !clicks().includes('b-reset'));
 check('重置进度 was never clicked', !clicks().includes('b-resetall'));
 
@@ -96,7 +95,8 @@ setTimeout(() => {
   const chips = [...document.querySelectorAll('.ynwac-sc-chip')].map((c) => c.textContent);
   check('chips cover 1-5 plus 跳过准备', ['1', '2', '3', '4', '5', '7'].every((k) => chips.includes(k)), chips.join(' '));
   check('提交 gets no chip at all here', !chips.includes('S'), chips.join(' '));
-  check('the lenders fall back to their letter', chips.includes('R') && chips.includes('B'), chips.join(' '));
+  check('重置 falls back to its letter', chips.includes('R'), chips.join(' '));
+  check('上一题 shows the letter it always had', chips.includes('B'), chips.join(' '));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
