@@ -349,6 +349,29 @@ The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` a
 npm install && npm test
 ```
 
+## Releasing
+
+There is no build step, no bundle, no server. **The file on `main` is the live version** — `@downloadURL` and `@updateURL` both point at this repo's raw URL, so pushing to `main` *is* the deploy. There is no release branch or tag to maintain, and a bad release is undone by another push.
+
+1. Edit `ynwac-shortcuts.user.js`.
+2. **Bump `@version` in the header.** Tampermonkey compares that string and nothing else. A push without it never reaches anyone's browser, no matter how many times they hit "check for updates" — this is the one step that silently wastes an afternoon.
+3. Match `package.json`, then sync the lockfile:
+   ```bash
+   npm install --package-lock-only
+   ```
+4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
+5. Both fixtures must be green:
+   ```bash
+   npm test
+   ```
+6. Commit and push to `main`.
+
+Then, in a browser that already has it installed:
+
+- Tampermonkey checks for updates on its own schedule. To force it, open the raw `.user.js` URL — it intercepts the link and offers **Update** with a side-by-side diff.
+- GitHub's raw CDN caches for a few minutes, so a fresh push is not visible immediately. If the diff still shows the old version, wait and reload.
+- Reload the practice page afterwards, then press <kbd>Alt</kbd>+<kbd>/</kbd>. The table is the fastest check that the new version actually took — if it still shows the previous key layout, the update did not land.
+
 ## Contributing
 
 Issues and PRs welcome — especially if you use a question type whose buttons are worded differently. Include the button's exact label text and the page URL.
