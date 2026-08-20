@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.5.1
+// @version      1.6.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -265,6 +265,27 @@
   const slotAction = (id) => (speakingMode() && SPEAKING_SLOTS[id]) || id;
 
   /* ------------------------------------------------------------------ *
+   * Pages the script stays off
+   *
+   * "A dictated sentence is words, not numerals" is what buys the digits
+   * their place in the answer box (see bareKeyLive) — and it is only true
+   * of dictation. Write Email is ten minutes of prose you compose
+   * yourself: "at 7 o'clock", a phone number, "at least 100 words". Every
+   * one of those digits would fire an action instead of landing in the
+   * sentence, and 3 fires 重置 — the whole email, gone.
+   *
+   * There is nothing to gain in return: no audio to play, and 提交 on a
+   * question you spend ten minutes on is not a key you are reaching for.
+   * So the script does not run here at all, rather than running with the
+   * digits switched off — a half-live key row is the confusing version.
+   *
+   * Matched at press time, not from the @match header: the site is a SPA,
+   * so walking here from another question type never reloads the script.
+   * ------------------------------------------------------------------ */
+  const OFF_PATHS = [/(^|\/)we\/?$/]; // Write Email, under /we, /zh/we, /en/we
+  const scriptOff = () => OFF_PATHS.some((re) => re.test(location.pathname));
+
+  /* ------------------------------------------------------------------ *
    * Finding buttons by their visible label
    * ------------------------------------------------------------------ */
   const DECORATION = /[\s ►▶▷⏵⏯⏸■●↻⟳⭯⭮←→⇐⇒<>«»·•|#*]+/g;
@@ -501,6 +522,10 @@
   document.addEventListener(
     'keydown',
     (e) => {
+      // Before anything else, including the panel and the master toggle:
+      // on an off page there is nothing to toggle and nothing to look up.
+      if (scriptOff()) return;
+
       const key = combo(e);
       const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
 
@@ -628,7 +653,7 @@
   }
 
   function refreshHints() {
-    if (!CONFIG.showHints || !CONFIG.enabled) {
+    if (!CONFIG.showHints || !CONFIG.enabled || scriptOff()) {
       if (hintLayer) hintLayer.innerHTML = '';
       return;
     }
@@ -959,7 +984,9 @@
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   refreshHints();
 
-  if (!load('seen-hint-v2', false)) {
+  // Not on an off page: the greeting would be announcing keys that do
+  // nothing here, and it would burn the one time it gets to be shown.
+  if (!scriptOff() && !load('seen-hint-v2', false)) {
     save('seen-hint-v2', true);
     setTimeout(() => toast(`⌨️ 快捷键已启用 · 按 ${pretty('alt+/')} 查看和改键 / press ${pretty('alt+/')} to view & rebind`), 1200);
   }

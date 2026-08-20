@@ -196,6 +196,16 @@ If the site renames a button, or a question type uses a different word, re-teach
 
 The label is saved locally. **恢复默认 / Reset to defaults** in the panel clears everything you've customised.
 
+## Where the script stays off
+
+**Write Email (`/we`) is excluded outright** — no shortcuts, no chips, not even the panel.
+
+The digits are allowed to stay live inside the answer box because a dictated sentence is words, not numerals. That reasoning is true of dictation and of nothing else. Write Email is ten minutes of prose you compose yourself — "at 7 o'clock", a phone number, "at least 100 words" — and every one of those digits would have fired an action instead of reaching the sentence. `3` fires 重置, which takes the email with it. There is nothing on the other side of the trade either: no audio to play, and 提交 on a question you spend ten minutes on is not a key you are reaching for.
+
+The list is `OFF_PATHS` near the top of `ynwac-shortcuts.user.js` — one regex per path. It is matched when you press a key rather than by the `@match` header, because the site is a SPA and walking to `/we` from another question type never reloads the script.
+
+If you want another long-form writing type out too — Summarize Written Text has the same shape — add its path there.
+
 ## Notes on safety
 
 - **Reset only ever matches the exact label `重置`.** The sidebar has a `重置进度` ("reset all progress") button, and no fuzzy match is allowed to reach it.
@@ -341,6 +351,16 @@ FIBL、Highlight Incorrect Words、Select Missing Word 和两个听力选择题�
 
 如果网站改了文案，按 <kbd>Alt</kbd>+<kbd>K</kbd> → 按数字选动作 → 点页面上对应的按钮重新识别即可（这一下点击会被拦截，不会真的触发按钮）。面板里的 **恢复默认** 可清除所有自定义。
 
+### 哪些页面不生效
+
+**Write Email（`/we`）整页停用**——没有快捷键、没有按钮标签，面板也不会弹。
+
+数字键之所以能在答题框里照样生效，前提是“听写的句子是单词，不是阿拉伯数字”——而这句话只对听写成立。写邮件是你自己写十分钟的正文：`at 7 o'clock`、电话号码、`at least 100 words`，这些数字本来会变成指令而不是落到句子里，而 `3` 对应的是 **重置**——一下去邮件就没了。反过来也没什么好换的：这页既没有音频可播，写了十分钟的题也不差那一下提交的功夫。
+
+名单就是 `ynwac-shortcuts.user.js` 靠前面的 `OFF_PATHS`，一条路径一个正则。它在**按键时**判断，而不是靠脚本头部的 `@match`：网站是 SPA，从别的题型点进 `/we` 是不会重新加载脚本的。
+
+还想停用别的写作类题型（Summarize Written Text 情况一样），把它的路径加进去即可。
+
 ### 安全说明
 
 - **重置只匹配完全等于 `重置` 的按钮**，侧边栏的 `重置进度`（清空全部练习进度）被显式排除，模糊匹配永远碰不到它。
@@ -353,7 +373,7 @@ FIBL、Highlight Incorrect Words、Select Missing Word 和两个听力选择题�
 
 The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` and reload the page.
 
-`test/` drives the script with real `KeyboardEvent`s against three jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, and the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one:
+`test/` drives the script with real `KeyboardEvent`s against four jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, and the WFD toolbar again under a `/we` URL, where every key has to do nothing at all:
 
 ```bash
 npm install && npm test
@@ -370,7 +390,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. All three fixtures must be green:
+5. All four fixtures must be green:
    ```bash
    npm test
    ```
