@@ -21,6 +21,7 @@ Each site gets its own script — the shortcuts stay the same, only the button-m
 | --- | :-: | :-: | :-: | :-: | :-: |
 | **WFD** Write From Dictation | 播放 | 提交 | 重置 | 下一题 | – |
 | **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
+| **FIBL** · **HIW** · **SMW** · listening **MC** | 播放 | 提交 | 重置 | 下一题 | – |
 
 One hand, four keys, in the order you press them. <kbd>4</kbd> is 下一题 on every question type.
 
@@ -131,6 +132,8 @@ And the controls:
 
 Letters step aside as soon as you're typing — <kbd>b</kbd> in the middle of a sentence is a letter, not 上一题 — so use <kbd>Alt</kbd>+<kbd>B</kbd> there. Digits are the ones that stay. Both fall back to their <kbd>Alt</kbd> form, and the chip on the button always shows whichever one currently works.
 
+On the fill-in-the-blank types the answer isn't a box, it's a row of small `<input>` fields — the same kind of field as `#`, so the digits go into the blank and <kbd>Alt</kbd>+digit is the one that plays. The chip on the button switches to `Alt+1` while the cursor is in a blank, so you can always read off the key that works.
+
 Turn either off in the panel if it gets in your way.
 
 ### A typical loop
@@ -183,6 +186,8 @@ The script finds buttons by their visible label (`播放`/`停止`, `提交`, `�
 
 The recorder's controls carry no text at all — they're icon-only — so those are found by their component class (`.pte-audio-pill__play`, `.pte-rec-pill__main`, `.pte-rec-pill__submit`, `.pte-rec-pill__reset`, `.pte-rec-pill__skip`) with the labels as a fallback.
 
+The listening types that still use the site's **older player** — FIBL, Highlight Incorrect Words, Select Missing Word and both listening Multiple-Choice — have no class or label on the play button either: it's a bare circle whose colour changes from one question type to the next. That one is matched by shape, `.pte-question-box button.w-10.h-10.rounded-full`, so a round button elsewhere on the page can't be mistaken for it. While the audio is still loading the site disables the button; <kbd>1</kbd> does nothing for that moment rather than reaching for something else.
+
 If the site renames a button, or a question type uses a different word, re-teach it:
 
 1. Press <kbd>Alt</kbd>+<kbd>K</kbd>.
@@ -214,6 +219,7 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 | --- | :-: | :-: | :-: | :-: | :-: |
 | **WFD** Write From Dictation | 播放 | 提交 | 重置 | 下一题 | – |
 | **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
+| **FIBL** · **HIW** · **SMW** · 听力选择题 | 播放 | 提交 | 重置 | 下一题 | – |
 
 一只手四个键，按的顺序就是它们的顺序。<kbd>4</kbd> 在所有题型上都是下一题。
 
@@ -281,6 +287,8 @@ The label is saved locally. **恢复默认 / Reset to defaults** in the panel cl
 
 字母一进输入框就让位——句子中间的 <kbd>b</kbd> 是个字母，不是上一题——所以在那儿要用 <kbd>Alt</kbd>+<kbd>B</kbd>。留下的是数字。两者都能退回 Alt 组合，按钮上的小标签永远显示当下真正管用的那个。不习惯可以在面板里分别关掉。
 
+填空类题型的答题区不是一个大框，而是一排小小的 `<input>`，跟题号框是同一类控件——所以数字会真的打进空格里，要播放得用 <kbd>Alt</kbd>+数字。光标一进空格，按钮上的标签就会变成 `Alt+1`，照着按就行。
+
 > **万一某句听写真的含阿拉伯数字**，按 <kbd>Alt</kbd>+<kbd>/</kbd> 打开面板，取消勾选 **打字时数字键也生效**。按 <kbd>Esc</kbd> 没用——那只会让*更多*键变成快捷键。
 
 > Windows / macOS 的 Chrome 里 <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>8</kbd> 是空闲的（切标签页用的是 Ctrl/⌘）。Linux 版 Chrome 用 Alt+数字切标签页，遇到冲突改键即可。
@@ -329,6 +337,8 @@ WFD 切题后光标会自动回到答题框，接着打字就行。
 
 录音条上的控件是纯图标、没有任何文字，所以靠组件类名定位（`.pte-audio-pill__play`、`.pte-rec-pill__main`、`.pte-rec-pill__submit`、`.pte-rec-pill__reset`、`.pte-rec-pill__skip`），文字只作为兜底。
 
+FIBL、Highlight Incorrect Words、Select Missing Word 和两个听力选择题仍在用网站的**旧版播放器**：播放键既没有类名也没有文字，只是一个圆形按钮，而且颜色还随题型变（FIBL 是青色，HIW 是蓝色）。这个只能靠形状认，选择器是 `.pte-question-box button.w-10.h-10.rounded-full`，限定在题目框内，页面上别处的圆按钮不会被误认。音频加载期间网站会把它禁用，那一小会儿按 <kbd>1</kbd> 不会有反应——但也不会去点别的按钮。
+
 如果网站改了文案，按 <kbd>Alt</kbd>+<kbd>K</kbd> → 按数字选动作 → 点页面上对应的按钮重新识别即可（这一下点击会被拦截，不会真的触发按钮）。面板里的 **恢复默认** 可清除所有自定义。
 
 ### 安全说明
@@ -343,7 +353,7 @@ WFD 切题后光标会自动回到答题框，接着打字就行。
 
 The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` and reload the page.
 
-`test/` drives the script with real `KeyboardEvent`s against two jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident) and the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart:
+`test/` drives the script with real `KeyboardEvent`s against three jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, and the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one:
 
 ```bash
 npm install && npm test
@@ -360,7 +370,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. Both fixtures must be green:
+5. All three fixtures must be green:
    ```bash
    npm test
    ```

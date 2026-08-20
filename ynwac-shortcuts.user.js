@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.5.0
+// @version      1.5.1
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -142,8 +142,15 @@
       kind: 'click',
       name: 'Play / stop audio',
       cn: '播放 / 停止',
-      // RA and RS render the player as an icon with no text at all.
-      selectors: ['.pte-audio-pill__play'],
+      // RA, RS and SST render the player as an icon with no text at all.
+      //
+      // FIBL, HIW, SMW and both listening MC types are still on the site's
+      // older player, which has no component class either — just a bare
+      // Tailwind circle with no text, no title and no aria-label. Its
+      // colour changes per question type (teal on FIBL, blue on HIW), so
+      // only the shape is dependable; scoping to the question box keeps a
+      // round button elsewhere on the page from ever winning.
+      selectors: ['.pte-audio-pill__play', '.pte-question-box button.w-10.h-10.rounded-full'],
       // On WFD the site swaps this button's label to 停止 while the audio
       // is playing, so the same key has to match both states.
       labels: ['播放', '停止', '暂停', '重播', '停止播放', '再听一次', 'play', 'stop', 'pause', 'replay'],

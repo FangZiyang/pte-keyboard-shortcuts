@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fill in the Blanks (Listening) fixture</title>
+<!--
+  FIBL, and with it HIW, SMW and both listening Multiple-Choice types.
+
+  Two players sit in the DOM at once: the mobile shell's .pte-audio-pill,
+  hidden at desktop width, and the desktop one — the site's older player,
+  which is a bare Tailwind circle with no text, no title and no aria-label.
+  Nothing about it says "play" except its shape and where it sits, and the
+  hidden pill must never be the one that gets clicked.
+
+  The answer blanks are <input>, not a <textarea>: there is no answer box
+  on this question type.
+-->
+<aside>
+  <button id="b-resetall">重置进度</button>
+</aside>
+
+<!-- block md:hidden — present, laid out to nothing at this width -->
+<div class="is-hidden fibl-mobile-shell">
+  <div class="pte-audio-pill pte-audio-pill--teal">
+    <button id="b-play-mobile" class="pte-audio-pill__play" aria-label="播放音频" title="播放音频"><svg></svg></button>
+  </div>
+</div>
+
+<div class="pte-question-box">
+  <div class="pte-content-area pte-content-area--reading-mc">
+    <div class="bg-gray-50 rounded-lg p-3 shadow-sm flex items-center space-x-3 mb-4">
+      <button id="b-play" class="w-10 h-10 flex items-center justify-center rounded-full text-white transition-all duration-300 bg-teal-500 hover:bg-teal-600"><svg></svg></button>
+      <div class="flex-1"></div>
+      <button id="b-speed" class="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded-md">x1.0</button>
+    </div>
+
+    <p>A <input id="blank1" type="text" class="border rounded px-2 py-1"> dining spot has just opened.</p>
+
+    <div>
+      <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary">提交</button>
+      <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+      <input id="b-num" class="pte-toolbar-btn" placeholder="#" size="4">
+      <button id="b-jump" class="pte-toolbar-btn pte-toolbar-btn--secondary">跳转</button>
+      <button id="b-prev" class="pte-toolbar-btn pte-toolbar-btn--secondary">← 上一题</button>
+      <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Round, same size, but not a player and not in the question box. -->
+<button id="b-decoy-round" class="w-10 h-10 rounded-full">×</button>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+</script>
