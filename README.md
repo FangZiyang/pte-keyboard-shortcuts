@@ -196,6 +196,40 @@ If the site renames a button, or a question type uses a different word, re-teach
 
 The label is saved locally. **恢复默认 / Reset to defaults** in the panel clears everything you've customised.
 
+## FIB-RW: the blanks you keep missing
+
+Reading & Writing: Fill in the Blanks grades your answer and then forgets it. Nothing on the site tells you that *which* vs *what* in **Climate and Weather** is the gap you have now missed four evenings running. The script keeps that tally.
+
+It reads the graded page and nothing else — no ids, no API, no network. After 提交 each blank's `<select>` goes disabled and takes a colour: red blanks are followed by a chip holding the right answer, green ones by a check mark. That is the whole source.
+
+Every graded submit adds one `attempts` to each blank and one `wrongCount` to the ones you missed, so doing a question again accumulates rather than overwrites. Records are keyed by **question title plus blank number**, never by the site's own ids — those can be renumbered by any deploy, and the title is what an offline question bank can be joined on.
+
+**导出错题 JSON / Export mistakes** in the panel (<kbd>Alt</kbd>+<kbd>/</kbd>) downloads `fibrw-mistakes.json`:
+
+```json
+{
+  "schema": "fibrw-mistakes/1",
+  "exportedAt": "2026-08-21T10:00:00.000Z",
+  "items": [
+    {
+      "title": "Climate and Weather",
+      "blankIndex": 3,
+      "attempts": 5,
+      "wrongCount": 3,
+      "lastChosen": "what",
+      "correctAnswer": "which",
+      "lastAttemptAt": "2026-08-21T09:58:00.000Z"
+    }
+  ]
+}
+```
+
+`blankIndex` is 1-based in the order the gaps are read. Only blanks with `wrongCount > 0` are exported; the rest stay in the log to keep `attempts` honest. `lastChosen` and `lastAttemptAt` describe the last time you got that blank **wrong** — in a revision sheet, showing the correct word you eventually settled on under "what you picked" would be nonsense.
+
+**It stays in your browser.** The log lives in `localStorage` under `ynwac-shortcuts:fibrw-mistakes` and goes nowhere until you press export. Clearing site data clears it.
+
+This is only `/fibrw`. `/fibr` — Reading: Fill in the Blanks, the drag-a-word-bank one — is a different question type and is not touched.
+
 ## Where the script stays off
 
 **Write Email (`/we`) is excluded outright** — no shortcuts, no chips, not even the panel.
@@ -351,6 +385,22 @@ FIBL、Highlight Incorrect Words、Select Missing Word 和两个听力选择题�
 
 如果网站改了文案，按 <kbd>Alt</kbd>+<kbd>K</kbd> → 按数字选动作 → 点页面上对应的按钮重新识别即可（这一下点击会被拦截，不会真的触发按钮）。面板里的 **恢复默认** 可清除所有自定义。
 
+### FIB-RW：总错的那几个空
+
+Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你 **Climate and Weather** 里 *which* / *what* 那个空你已经连错四个晚上了。脚本把这笔账记下来。
+
+数据只从判完分的页面上读——不碰 id、不调接口、不联网。提交后每个空的 `<select>` 会变成 disabled 并上色：错的是红的，紧跟着一个写着正确答案的小标；对的是绿的，后面跟一个对号。就这么多。
+
+每提交一次，每个空的 `attempts` 加一，错的那几个 `wrongCount` 再加一——同一道题再做是**累加**，不是覆盖。记录用**题目标题 + 空序号**做键，不用网站内部的数字 id——那个一发版就可能重排，而标题是本地题库能对齐的东西。
+
+面板（<kbd>Alt</kbd>+<kbd>/</kbd>）里的 **导出错题 JSON** 会下载 `fibrw-mistakes.json`，格式见上面英文部分。
+
+`blankIndex` 从 1 开始，按空在文章里出现的先后顺序。只导出 `wrongCount > 0` 的空；其余的留在本地只为了让 `attempts` 准确。`lastChosen` 和 `lastAttemptAt` 指的是**最后一次做错**的那次——复习单里“上次选了什么”如果显示你最后选对的那个词，就没意义了。
+
+**数据不出浏览器。** 存在 `localStorage` 的 `ynwac-shortcuts:fibrw-mistakes` 里，不点导出就不会发往任何地方；清网站数据会一并清掉。
+
+只对 `/fibrw` 生效。`/fibr`（Reading FIB，整篇共用一个拖拽词库的那个）是另一个题型，不碰。
+
 ### 哪些页面不生效
 
 **Write Email（`/we`）整页停用**——没有快捷键、没有按钮标签，面板也不会弹。
@@ -373,7 +423,7 @@ FIBL、Highlight Incorrect Words、Select Missing Word 和两个听力选择题�
 
 The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` and reload the page.
 
-`test/` drives the script with real `KeyboardEvent`s against four jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, and the WFD toolbar again under a `/we` URL, where every key has to do nothing at all:
+`test/` drives the script against five jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, the WFD toolbar again under a `/we` URL, where every key has to do nothing at all, and a graded `/fibrw` question, where the mistake log and its export are checked end to end:
 
 ```bash
 npm install && npm test
@@ -390,7 +440,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. All four fixtures must be green:
+5. All five fixtures must be green:
    ```bash
    npm test
    ```

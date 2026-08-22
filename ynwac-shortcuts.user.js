@@ -2,9 +2,9 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.6.0
-// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Rebindable keys, on-button hints.
-// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。快捷键可自定义，按钮上直接显示提示。
+// @version      1.7.0
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks you keep missing, and exports them. Rebindable keys, on-button hints.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -424,6 +424,145 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Reading & Writing: Fill in the Blanks — which blanks you keep missing
+   *
+   * The site grades the question and then forgets it: nothing tells you
+   * that "which vs what" in Climate and Weather is the one you have now
+   * got wrong four evenings running. This keeps that tally locally, and
+   * exports it so a revision sheet can be built from it.
+   *
+   * How the page says it, all of it read back off the DOM after 提交:
+   *
+   *   blank        <select> inside .pte-question-box, one per gap
+   *   graded       the select goes disabled and picks up a colour
+   *   wrong        bg-red-50 …, and the right answer is rendered in a
+   *                <span class="inline-flex …"> immediately after it
+   *   right        bg-green-50 …, followed by a green check <svg>, so the
+   *                answer is simply what you chose
+   *
+   * The mobile layout has a second copy of every select outside the
+   * question box, so both filters matter — scope and visibility.
+   *
+   * Nothing leaves the browser: localStorage until you ask for the file.
+   * ------------------------------------------------------------------ */
+  const MISTAKES_KEY = 'fibrw-mistakes';
+  const FIBRW_PATH = /(^|\/)fibrw\/?$/; // NOT /fibr, which is a different question type
+
+  /*
+   * Keyed by title + blank number, never by the site's own ids.
+   * ynwac's bundle can renumber its questions on any deploy, and the
+   * offline question bank this feeds is aligned on titles too — so the
+   * title as displayed, character for character, is the join key.
+   */
+  const mistakeKey = (title, blankIndex) => `${title} ${blankIndex}`;
+
+  function fibrwBlanks(box) {
+    return Array.from(box.querySelectorAll('select'))
+      .filter(isVisible)
+      .map((sel, i) => {
+        const cls = sel.getAttribute('class') || '';
+        const wrong = /bg-red-/.test(cls);
+        const right = /bg-green-/.test(cls);
+        const chip = sel.nextElementSibling;
+        return {
+          blankIndex: i + 1, // 1-based, in the order the gaps are read
+          chosen: sel.value,
+          graded: sel.disabled && (wrong || right),
+          wrong,
+          correctAnswer: wrong ? (chip && chip.tagName === 'SPAN' ? rawText(chip) : '') : sel.value,
+        };
+      });
+  }
+
+  // The graded screen already written down. A MutationObserver fires many
+  // times for one submit, and 重置 → answer again → 提交 has to count as a
+  // second attempt even when you picked exactly the same words.
+  let lastGraded = null;
+
+  function recordFibrw() {
+    if (!FIBRW_PATH.test(location.pathname)) return (lastGraded = null), undefined;
+
+    const box = Array.from(document.querySelectorAll('.pte-question-box')).filter(isVisible)[0];
+    const titleEl = box && Array.from(box.querySelectorAll('span.truncate')).filter(isVisible)[0];
+    const title = titleEl ? rawText(titleEl) : '';
+    const blanks = box ? fibrwBlanks(box) : [];
+
+    if (!title || !blanks.length || !blanks.every((b) => b.graded)) return (lastGraded = null), undefined;
+
+    const sig = [title].concat(blanks.map((b) => `${b.blankIndex}:${b.chosen}`)).join(' ');
+    if (sig === lastGraded) return;
+    lastGraded = sig;
+
+    const log = load(MISTAKES_KEY, {});
+    const at = new Date().toISOString();
+    let missed = 0;
+
+    for (const b of blanks) {
+      const k = mistakeKey(title, b.blankIndex);
+      const rec = log[k] || { title, blankIndex: b.blankIndex, attempts: 0, wrongCount: 0 };
+      rec.attempts += 1;
+      // lastChosen / lastAttemptAt describe the last time you got this
+      // blank WRONG — in a mistakes sheet, showing the correct word you
+      // finally settled on under "what you picked" would be nonsense.
+      if (b.wrong) {
+        rec.wrongCount += 1;
+        rec.lastChosen = b.chosen;
+        rec.lastAttemptAt = at;
+        missed++;
+      }
+      if (b.correctAnswer) rec.correctAnswer = b.correctAnswer;
+      log[k] = rec;
+    }
+
+    save(MISTAKES_KEY, log);
+    if (missed) toast(`✍️ 记下 ${missed} 个错空 / ${missed} wrong blank${missed > 1 ? 's' : ''} logged`);
+  }
+
+  let fibrwTimer = null;
+  const scheduleFibrw = () => {
+    clearTimeout(fibrwTimer);
+    fibrwTimer = setTimeout(recordFibrw, 250);
+  };
+
+  // Fields spelled out in schema order rather than handed over as stored,
+  // so the file reads the same whatever order localStorage grew them in.
+  const exportItem = (r) => ({
+    title: r.title,
+    blankIndex: r.blankIndex,
+    attempts: r.attempts,
+    wrongCount: r.wrongCount,
+    lastChosen: r.lastChosen || '',
+    correctAnswer: r.correctAnswer || '',
+    lastAttemptAt: r.lastAttemptAt || '',
+  });
+
+  function exportFibrw() {
+    const log = load(MISTAKES_KEY, {});
+    const items = Object.keys(log)
+      .map((k) => log[k])
+      // Only blanks you have actually missed: the rest are in the log to
+      // keep `attempts` honest, not because a revision sheet wants them.
+      .filter((r) => r && r.wrongCount > 0)
+      .sort((a, b) => a.title.localeCompare(b.title) || a.blankIndex - b.blankIndex)
+      .map(exportItem);
+
+    if (!items.length) {
+      toast('还没有记录到错题 / no mistakes logged yet', true);
+      return 0;
+    }
+
+    const payload = { schema: 'fibrw-mistakes/1', exportedAt: new Date().toISOString(), items };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fibrw-mistakes.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`已导出 ${items.length} 个错空 / exported ${items.length} blanks`);
+    return items.length;
+  }
+
+  /* ------------------------------------------------------------------ *
    * Key naming
    * ------------------------------------------------------------------ */
 
@@ -765,6 +904,7 @@
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="showToast"> 显示操作提示 / show toast</label>
         <div class="ynwac-sc-foot">
           <button type="button" class="ynwac-sc-reset">恢复默认 Reset to defaults</button>
+          <button type="button" class="ynwac-sc-export" title="FIB-RW 的错空只记在本机，导出前不会离开浏览器 · FIB-RW misses are logged in this browser and go nowhere until you export">导出错题 JSON / Export mistakes</button>
           <span class="ynwac-sc-note">和翻译插件冲突？点“改键”换一个 · Clashes with a translator extension? Hit Rebind.</span>
         </div>
       </div>`;
@@ -789,6 +929,7 @@
       refreshHints();
       toast('已恢复默认快捷键 / defaults restored');
     });
+    panelEl.querySelector('.ynwac-sc-export').addEventListener('click', exportFibrw);
     panelEl.querySelectorAll('.ynwac-sc-rebind').forEach((btn) => {
       btn.addEventListener('click', () => startCapture(btn.dataset.act, btn));
     });
@@ -964,6 +1105,8 @@
 .ynwac-sc-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9}
 .ynwac-sc-reset{border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;color:#374151}
 .ynwac-sc-reset:hover{background:#f3f4f6}
+.ynwac-sc-export{border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;color:#374151}
+.ynwac-sc-export:hover{background:#f3f4f6}
 .ynwac-sc-note{font-size:11px;color:#6b7280}
 
 .ynwac-sc-picker{position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:2147483002;display:none;
@@ -980,9 +1123,23 @@
   /* ------------------------------------------------------------------ *
    * Boot
    * ------------------------------------------------------------------ */
-  const mo = new MutationObserver(scheduleHints);
+  // Our own chips repainting must not count as page activity: refreshHints
+  // rewrites the hint layer, the observer sees that, and 150ms later it
+  // repaints again — a loop that never settles and that starved anything
+  // waiting on a longer debounce.
+  const fromUs = (m) => {
+    const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+    return !!(el && el.closest && el.closest('.ynwac-sc-root'));
+  };
+  const mo = new MutationObserver((records) => {
+    if (records.every(fromUs)) return;
+    scheduleHints();
+    scheduleFibrw();
+  });
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   refreshHints();
+  // A question graded before the script woke up still counts.
+  scheduleFibrw();
 
   // Not on an off page: the greeting would be announcing keys that do
   // nothing here, and it would burn the one time it gets to be shown.

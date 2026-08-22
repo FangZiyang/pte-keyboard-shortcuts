@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Reading &amp; Writing: Fill in the Blanks fixture</title>
+<!--
+  /fibrw, in the state the site leaves it in AFTER 提交.
+
+  Each blank is a <select> that has gone disabled and picked up a colour.
+  A wrong one is red and is followed by a chip carrying the right answer;
+  a right one is green and is followed by a check mark, so its answer is
+  whatever you chose.
+
+  The mobile layout keeps a second copy of every select outside the
+  question box — the one place a naive querySelectorAll would double-count
+  every blank — so it is here too.
+-->
+<div class="is-hidden fibrw-mobile-shell">
+  <p>
+    <select disabled class="mx-1 bg-red-50 border-red-300 text-red-700">
+      <option value="denied" selected>denied</option>
+    </select>
+    <span class="inline-flex items-center">caused</span>
+  </p>
+</div>
+
+<div class="pte-question-box">
+  <span class="inline-flex">Question #2</span>
+  <span class="truncate whitespace-nowrap text-[19px] font-medium leading-tight text-slate-800">Ice Age and Ocean Currents</span>
+
+  <div class="pte-content-area">
+    <p class="text-gray-700 leading-loose">
+      At the end of the last ice age, the melting ice disrupted the ocean currents and
+      <select disabled class="mx-1 px-3 py-2 border rounded-md bg-red-50 border-red-300 text-red-700">
+        <option value="">选择...</option>
+        <option value="denied" selected>denied</option>
+        <option value="caused">caused</option>
+      </select>
+      <span class="inline-flex items-center">caused</span>
+      <span class="leading-loose">a drop in temperature.</span>
+      <select disabled class="mx-1 px-3 py-2 border rounded-md bg-green-50 border-green-300 text-green-700">
+        <option value="">选择...</option>
+        <option value="Even though" selected>Even though</option>
+        <option value="now that">now that</option>
+      </select>
+      <svg class="inline text-green-500 ml-1 text-lg"></svg>
+      <span class="leading-loose">the rest of the planet was warming,</span>
+      <select disabled class="mx-1 px-3 py-2 border rounded-md bg-red-50 border-red-300 text-red-700">
+        <option value="">选择...</option>
+        <option value="in" selected>in</option>
+        <option value="up">up</option>
+      </select>
+      <span class="inline-flex items-center">up</span>
+      <span class="leading-loose">north it stayed cold.</span>
+    </p>
+  </div>
+
+  <div>
+    <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary" disabled>已提交</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over — that text is what the other repo has to parse.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>
