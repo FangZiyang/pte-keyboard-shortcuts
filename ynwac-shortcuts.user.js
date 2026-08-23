@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.7.0
+// @version      1.8.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks you keep missing, and exports them. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -446,6 +446,12 @@
    * Nothing leaves the browser: localStorage until you ask for the file.
    * ------------------------------------------------------------------ */
   const MISTAKES_KEY = 'fibrw-mistakes';
+  const QNUM_KEY = 'fibrw-qnum'; // title -> the site's Question #N
+  const BACKUP_KEY = 'fibrw-mistakes-backup-v1';
+  // Enough to see a pattern without letting one heavily-drilled blank
+  // grow without bound; the totals are counted separately, so trimming
+  // the tail never changes them.
+  const HISTORY_CAP = 50;
   const FIBRW_PATH = /(^|\/)fibrw\/?$/; // NOT /fibr, which is a different question type
 
   /*
@@ -453,8 +459,25 @@
    * ynwac's bundle can renumber its questions on any deploy, and the
    * offline question bank this feeds is aligned on titles too — so the
    * title as displayed, character for character, is the join key.
+   *
+   * questionNumber rides along as a FIELD, not as the key: it is what you
+   * type into the # box to get back to the question, and without it a
+   * mistake in the log can only be found again by paging through 67
+   * questions looking for the title. Useful, but not something to hang
+   * the identity of a record on.
    */
   const mistakeKey = (title, blankIndex) => `${title} ${blankIndex}`;
+
+  // Learned from every /fibrw question you land on, graded or not, so a
+  // record made before this index existed still gets its number filled in
+  // the next time you happen to visit that question.
+  function noteQuestionNumber(title, n) {
+    if (!title || !n) return;
+    const index = load(QNUM_KEY, {});
+    if (index[title] === n) return;
+    index[title] = n;
+    save(QNUM_KEY, index);
+  }
 
   function fibrwBlanks(box) {
     return Array.from(box.querySelectorAll('select'))
@@ -474,6 +497,58 @@
       });
   }
 
+  /*
+   * Bring a log written by an older version up to date.
+   *
+   * Purely additive: it fills in fields that did not exist yet and never
+   * removes or rewrites one, so a record survives the upgrade with every
+   * count it already had. The pre-migration blob is copied aside once, so
+   * there is somewhere to go back to even if that turns out to be wrong.
+   *
+   * Records from before questionNumber existed cannot have one invented
+   * for them, but they get one the next time you visit that question —
+   * see noteQuestionNumber.
+   */
+  function migrateFibrw() {
+    // Snapshot the bytes BEFORE anything is touched — `log` is mutated in
+    // place below, so backing it up afterwards would just save the result.
+    const original = localStorage.getItem(STORE_PREFIX + MISTAKES_KEY);
+    const log = load(MISTAKES_KEY, null);
+    if (!log || !Object.keys(log).length) return;
+
+    const index = load(QNUM_KEY, {});
+    let touched = false;
+
+    for (const k of Object.keys(log)) {
+      const rec = log[k];
+      if (!rec) continue;
+
+      if (!rec.history) {
+        // Everything an old record can honestly say about its own past:
+        // the one wrong attempt it kept a timestamp for. The correct
+        // attempts it also counted have no time recorded anywhere, so
+        // they are left out rather than stamped with a made-up one.
+        rec.history = rec.lastAttemptAt ? [{ at: rec.lastAttemptAt, chosen: rec.lastChosen || '', ok: false }] : [];
+        touched = true;
+      }
+      if (!rec.questionNumber && index[rec.title]) {
+        rec.questionNumber = index[rec.title];
+        touched = true;
+      }
+    }
+
+    if (touched) {
+      if (original && !localStorage.getItem(STORE_PREFIX + BACKUP_KEY)) {
+        try {
+          localStorage.setItem(STORE_PREFIX + BACKUP_KEY, original);
+        } catch (_) {
+          /* out of quota — the migration is additive, so carry on anyway */
+        }
+      }
+      save(MISTAKES_KEY, log);
+    }
+  }
+
   // The graded screen already written down. A MutationObserver fires many
   // times for one submit, and 重置 → answer again → 提交 has to count as a
   // second attempt even when you picked exactly the same words.
@@ -485,7 +560,11 @@
     const box = Array.from(document.querySelectorAll('.pte-question-box')).filter(isVisible)[0];
     const titleEl = box && Array.from(box.querySelectorAll('span.truncate')).filter(isVisible)[0];
     const title = titleEl ? rawText(titleEl) : '';
+    const qnum = box ? Number((rawText(box).match(/Question #(\d+)/) || [])[1]) || null : null;
     const blanks = box ? fibrwBlanks(box) : [];
+
+    // Worth learning even on a question you are only passing through.
+    noteQuestionNumber(title, qnum);
 
     if (!title || !blanks.length || !blanks.every((b) => b.graded)) return (lastGraded = null), undefined;
 
@@ -499,8 +578,18 @@
 
     for (const b of blanks) {
       const k = mistakeKey(title, b.blankIndex);
-      const rec = log[k] || { title, blankIndex: b.blankIndex, attempts: 0, wrongCount: 0 };
+      const rec = log[k] || { title, blankIndex: b.blankIndex, attempts: 0, wrongCount: 0, history: [] };
+      if (!rec.history) rec.history = [];
+      if (qnum) rec.questionNumber = qnum;
+
       rec.attempts += 1;
+      // One entry per submit, right or wrong. The totals below are all
+      // derivable from this, but they are kept because the revision sheet
+      // reads them directly — and because a truncated history should not
+      // silently change what "you missed this 4 times" means.
+      rec.history.push({ at, chosen: b.chosen, ok: !b.wrong });
+      if (rec.history.length > HISTORY_CAP) rec.history = rec.history.slice(-HISTORY_CAP);
+
       // lastChosen / lastAttemptAt describe the last time you got this
       // blank WRONG — in a mistakes sheet, showing the correct word you
       // finally settled on under "what you picked" would be nonsense.
@@ -515,7 +604,10 @@
     }
 
     save(MISTAKES_KEY, log);
-    if (missed) toast(`✍️ 记下 ${missed} 个错空 / ${missed} wrong blank${missed > 1 ? 's' : ''} logged`);
+    if (missed) {
+      const where = qnum ? `#${qnum} ` : '';
+      toast(`✍️ ${where}记下 ${missed} 个错空 / ${missed} wrong blank${missed > 1 ? 's' : ''} logged`);
+    }
   }
 
   let fibrwTimer = null;
@@ -526,32 +618,55 @@
 
   // Fields spelled out in schema order rather than handed over as stored,
   // so the file reads the same whatever order localStorage grew them in.
-  const exportItem = (r) => ({
+  //
+  // Every field schema 1 carried is still here, unchanged and in the same
+  // place. questionNumber and history are added on top, which is the whole
+  // reason for the version bump: a reader written against 1 keeps working,
+  // a reader that wants to say "#21, blank 1, missed at 12:49" now can.
+  const exportItem = (r, index) => ({
     title: r.title,
+    questionNumber: r.questionNumber || index[r.title] || null,
     blankIndex: r.blankIndex,
     attempts: r.attempts,
     wrongCount: r.wrongCount,
     lastChosen: r.lastChosen || '',
     correctAnswer: r.correctAnswer || '',
     lastAttemptAt: r.lastAttemptAt || '',
+    history: (r.history || []).map((h) => ({ at: h.at, chosen: h.chosen || '', ok: !!h.ok })),
   });
 
   function exportFibrw() {
     const log = load(MISTAKES_KEY, {});
+    const index = load(QNUM_KEY, {});
     const items = Object.keys(log)
       .map((k) => log[k])
       // Only blanks you have actually missed: the rest are in the log to
       // keep `attempts` honest, not because a revision sheet wants them.
       .filter((r) => r && r.wrongCount > 0)
-      .sort((a, b) => a.title.localeCompare(b.title) || a.blankIndex - b.blankIndex)
-      .map(exportItem);
+      .map((r) => exportItem(r, index))
+      // Question order, so the sheet walks the paper the way you would.
+      // Anything with no number yet sorts to the end rather than to 0.
+      .sort(
+        (a, b) =>
+          (a.questionNumber || Infinity) - (b.questionNumber || Infinity) ||
+          a.title.localeCompare(b.title) ||
+          a.blankIndex - b.blankIndex
+      );
 
     if (!items.length) {
       toast('还没有记录到错题 / no mistakes logged yet', true);
       return 0;
     }
 
-    const payload = { schema: 'fibrw-mistakes/1', exportedAt: new Date().toISOString(), items };
+    const payload = {
+      schema: 'fibrw-mistakes/2',
+      exportedAt: new Date().toISOString(),
+      // Every `at` in here is UTC. This is the zone they were collected
+      // in, so a sheet can print the local clock time you actually sat
+      // down at rather than something three hours off.
+      timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
+      items,
+    };
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url;
@@ -1138,6 +1253,7 @@
   });
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   refreshHints();
+  migrateFibrw();
   // A question graded before the script woke up still counts.
   scheduleFibrw();
 

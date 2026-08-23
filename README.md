@@ -208,23 +208,42 @@ Every graded submit adds one `attempts` to each blank and one `wrongCount` to th
 
 ```json
 {
-  "schema": "fibrw-mistakes/1",
-  "exportedAt": "2026-08-21T10:00:00.000Z",
+  "schema": "fibrw-mistakes/2",
+  "exportedAt": "2026-08-23T20:00:00.000Z",
+  "timezone": "America/Toronto",
   "items": [
     {
-      "title": "Climate and Weather",
-      "blankIndex": 3,
-      "attempts": 5,
-      "wrongCount": 3,
-      "lastChosen": "what",
-      "correctAnswer": "which",
-      "lastAttemptAt": "2026-08-21T09:58:00.000Z"
+      "title": "Stress and Life Changes",
+      "questionNumber": 21,
+      "blankIndex": 1,
+      "attempts": 3,
+      "wrongCount": 2,
+      "lastChosen": "expectations",
+      "correctAnswer": "changes",
+      "lastAttemptAt": "2026-08-22T16:49:21.763Z",
+      "history": [
+        { "at": "2026-08-20T14:02:11.000Z", "chosen": "expectations", "ok": false },
+        { "at": "2026-08-21T09:31:04.000Z", "chosen": "changes", "ok": true },
+        { "at": "2026-08-22T16:49:21.763Z", "chosen": "expectations", "ok": false }
+      ]
     }
   ]
 }
 ```
 
+`questionNumber` is the site's own **Question #N** — the number you type into the `#` box to get back to it. Without it, finding a logged mistake again means paging through 67 questions looking for a title. It rides along as a field; the record is still **keyed** on title plus blank number, because the site can renumber its questions on any deploy and an offline question bank can only be joined on the title.
+
+`history` is one entry per submit, right or wrong, each with its own timestamp — so "when did I miss this" has an answer per attempt rather than only for the most recent one. Capped at the last 50 entries; the totals are counted separately, so trimming the tail never changes them. Every `at` is UTC, and `timezone` names the zone they were collected in so a sheet can print the local clock time you actually sat down at.
+
 `blankIndex` is 1-based in the order the gaps are read. Only blanks with `wrongCount > 0` are exported; the rest stay in the log to keep `attempts` honest. `lastChosen` and `lastAttemptAt` describe the last time you got that blank **wrong** — in a revision sheet, showing the correct word you eventually settled on under "what you picked" would be nonsense.
+
+### Upgrading a log written by 1.7.x
+
+Schema 2 is **additive**: every field schema 1 had is still there, unchanged and in the same place, so a reader written against 1 keeps working as long as it does not reject the version string outright.
+
+The upgrade runs once, on the first `/fibrw` page you open, and only ever adds fields — no count is rewritten and no record is dropped. Old records get a `history` synthesised from the single wrong attempt they had a timestamp for; the correct attempts they also counted were never timestamped, so they are left out rather than stamped with an invented time. `questionNumber` cannot be invented either, so an old record gets one the next time you visit that question, and the export writes `null` until then.
+
+The pre-upgrade log is copied to `ynwac-shortcuts:fibrw-mistakes-backup-v1` and left alone after that.
 
 **It stays in your browser.** The log lives in `localStorage` under `ynwac-shortcuts:fibrw-mistakes` and goes nowhere until you press export. Clearing site data clears it.
 
@@ -395,6 +414,12 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 
 面板（<kbd>Alt</kbd>+<kbd>/</kbd>）里的 **导出错题 JSON** 会下载 `fibrw-mistakes.json`，格式见上面英文部分。
 
+`questionNumber` 就是网站上的 **Question #N**，也就是你往 `#` 框里填的那个数。没它的话，想回到一个错空就只能拿着标题在 67 道题里一页页翻。它只是一个字段；记录的**键**仍然是标题 + 空序号，因为站点一发版就可能重排编号，而本地题库只能靠标题对齐。
+
+`history` 是每次提交一条（对错都记），各自带时间戳——“我什么时候错的”不再只有最后一次的答案。最多保留 50 条；总数是单独计的，截尾巴不会改变它们。所有 `at` 都是 UTC，信封上的 `timezone` 说明当时所在时区，下游才能打印出你真正坐下来做题的本地时间。
+
+**从 1.7.x 的旧记录升级**：schema 2 是**只加不改**的——schema 1 的每个字段都原样在原位。升级在你下次打开 `/fibrw` 时跑一次，只补字段，不改任何计数、不删任何记录。旧记录的 `history` 由它唯一带时间戳的那次错答生成；它同时计过的对答从来没存过时间，所以宁可缺也不编一个。`questionNumber` 同理无法凭空补，会在你下次访问那道题时自动填上，在那之前导出为 `null`。升级前的旧日志会完整拷贝到 `ynwac-shortcuts:fibrw-mistakes-backup-v1` 并不再动。
+
 `blankIndex` 从 1 开始，按空在文章里出现的先后顺序。只导出 `wrongCount > 0` 的空；其余的留在本地只为了让 `attempts` 准确。`lastChosen` 和 `lastAttemptAt` 指的是**最后一次做错**的那次——复习单里“上次选了什么”如果显示你最后选对的那个词，就没意义了。
 
 **数据不出浏览器。** 存在 `localStorage` 的 `ynwac-shortcuts:fibrw-mistakes` 里，不点导出就不会发往任何地方；清网站数据会一并清掉。
@@ -423,7 +448,7 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 
 The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` and reload the page.
 
-`test/` drives the script against five jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, the WFD toolbar again under a `/we` URL, where every key has to do nothing at all, and a graded `/fibrw` question, where the mistake log and its export are checked end to end:
+`test/` drives the script against six jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, the WFD toolbar again under a `/we` URL, where every key has to do nothing at all, a graded `/fibrw` question, where the mistake log and its export are checked end to end, and a log written by an older version, where the upgrade has to add fields without disturbing a single count:
 
 ```bash
 npm install && npm test
@@ -440,7 +465,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. All five fixtures must be green:
+5. All six fixtures must be green:
    ```bash
    npm test
    ```

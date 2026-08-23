@@ -57,12 +57,16 @@ function regrade() {
 
   const b1 = first['Ice Age and Ocean Currents 1'];
   check('title is kept verbatim', b1 && b1.title === 'Ice Age and Ocean Currents', b1 && b1.title);
+  check('the question number is captured off the badge', b1 && b1.questionNumber === 2, b1 && b1.questionNumber);
+  check('one history entry per submit, with its own timestamp', b1 && b1.history.length === 1 && /^\d{4}-/.test(b1.history[0].at), JSON.stringify(b1 && b1.history));
+  check('history says what was picked and whether it was right', b1 && b1.history[0].chosen === 'denied' && b1.history[0].ok === false, JSON.stringify(b1 && b1.history));
   check('a wrong blank counts as attempt and miss', b1 && b1.attempts === 1 && b1.wrongCount === 1, JSON.stringify(b1));
   check('what you picked is kept', b1 && b1.lastChosen === 'denied', b1 && b1.lastChosen);
   check('the right answer comes off the chip', b1 && b1.correctAnswer === 'caused', b1 && b1.correctAnswer);
 
   const b2 = first['Ice Age and Ocean Currents 2'];
   check('a right blank counts as an attempt, not a miss', b2 && b2.attempts === 1 && b2.wrongCount === 0, JSON.stringify(b2));
+  check('a right blank is in the history too, marked ok', b2 && b2.history.length === 1 && b2.history[0].ok === true, JSON.stringify(b2 && b2.history));
   check('its answer is what you chose', b2 && b2.correctAnswer === 'Even though', b2 && b2.correctAnswer);
 
   const b3 = first['Ice Age and Ocean Currents 3'];
@@ -77,6 +81,7 @@ function regrade() {
   await regrade();
   const again = log()['Ice Age and Ocean Currents 1'];
   check('a second attempt on the same blank accumulates', again.attempts === 2 && again.wrongCount === 2, JSON.stringify(again));
+  check('the history grows with it, keeping both timestamps', again.history.length === 2 && again.history[0].at !== again.history[1].at, JSON.stringify(again.history));
   check('a blank you got right again counts attempts only', log()['Ice Age and Ocean Currents 2'].wrongCount === 0, JSON.stringify(log()['Ice Age and Ocean Currents 2']));
 
   /* ---- export ---- */
@@ -91,18 +96,21 @@ function regrade() {
   check('a file was handed over', window.__downloads.length === 1 && window.__downloads[0].name === 'fibrw-mistakes.json', JSON.stringify(window.__downloads));
 
   const out = JSON.parse(window.__lastBlobText);
-  check('schema tag is fibrw-mistakes/1', out.schema === 'fibrw-mistakes/1', out.schema);
+  check('schema tag is fibrw-mistakes/2', out.schema === 'fibrw-mistakes/2', out.schema);
+  check('the envelope names the zone the timestamps were collected in', typeof out.timezone === 'string', out.timezone);
   check('exportedAt is an ISO timestamp', /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(out.exportedAt || ''), out.exportedAt);
   check('only blanks actually missed are exported', out.items.length === 2, JSON.stringify(out.items.map((i) => i.blankIndex)));
   check('the right-every-time blank is left out', !out.items.some((i) => i.blankIndex === 2), JSON.stringify(out.items.map((i) => i.blankIndex)));
 
   const item = out.items[0];
   check(
-    'every field the other repo reads is present',
+    'every schema-1 field is still present and unmoved',
     ['title', 'blankIndex', 'attempts', 'wrongCount', 'lastChosen', 'correctAnswer', 'lastAttemptAt'].every((f) => f in item),
     Object.keys(item).join(' ')
   );
-  check('items are sorted by title then blank', out.items[0].blankIndex === 1 && out.items[1].blankIndex === 3);
+  check('the export carries the question number', item.questionNumber === 2, String(item.questionNumber));
+  check('the export carries the per-attempt history', Array.isArray(item.history) && item.history.length === 2, JSON.stringify(item.history));
+  check('items are sorted by question then blank', out.items[0].blankIndex === 1 && out.items[1].blankIndex === 3);
   check('lastAttemptAt is an ISO timestamp', /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(item.lastAttemptAt || ''), item.lastAttemptAt);
 
   /* ---- nothing is recorded away from /fibrw ---- */
