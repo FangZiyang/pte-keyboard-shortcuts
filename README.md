@@ -99,7 +99,8 @@ On a speaking question the same keys follow the recorder instead:
 | <kbd>7</kbd> | 跳过准备 Skip the prep countdown — RA | |
 | <kbd>8</kbd> | AI 评分 AI-score the take — RA, RS | |
 | <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 Previous | |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit | |
+| <kbd>Enter</kbd> | 提交 Submit — **WFD only**, and it works with the cursor still in the answer box | |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit — every question type | |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next | |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | Put the cursor back in the answer box | |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | Jump to a question number (`#` field) | |
@@ -327,7 +328,8 @@ If you want another long-form writing type out too — Summarize Written Text ha
 | <kbd>7</kbd> | 跳过准备（RA） | |
 | <kbd>8</kbd> | AI 评分（RA、RS） | |
 | <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 | |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 | |
+| <kbd>Enter</kbd> | 提交——**仅 WFD**，光标还在答题框里也能用 | |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交——所有题型 | |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 | |
 | <kbd>Alt</kbd> + <kbd>I</kbd> | 光标回到答题框 | |
 | <kbd>Alt</kbd> + <kbd>J</kbd> | 光标到题号框（`#`） | |

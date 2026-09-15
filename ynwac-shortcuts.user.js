@@ -2,7 +2,7 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.8.0
+// @version      1.9.0
 // @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks you keep missing, and exports them. Rebindable keys, on-button hints.
 // @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
@@ -103,9 +103,12 @@
 
   // Single keys. Live whenever the cursor is not in a text field — and,
   // for the digits, inside the answer box too. See bareKeyLive.
+  //
+  // Enter is the odd one out: it only counts on Write From Dictation, and
+  // there it works inside the answer box as well. See bareKeyLive.
   const DEFAULT_QUICK = {
     play: ['1', 'p'],
-    submit: ['2', 's'],
+    submit: ['2', 's', 'enter'],
     reset: ['3', 'r'],
     next: ['4', 'n', 'arrowright'],
     rerecord: ['5'],
@@ -284,6 +287,24 @@
    * ------------------------------------------------------------------ */
   const OFF_PATHS = [/(^|\/)we\/?$/]; // Write Email, under /we, /zh/we, /en/we
   const scriptOff = () => OFF_PATHS.some((re) => re.test(location.pathname));
+
+  /* ------------------------------------------------------------------ *
+   * Enter is 提交 — on Write From Dictation only
+   *
+   * A dictated sentence is one line, so a newline in the answer box is
+   * never what you meant, and Enter is the key your finger is already
+   * heading for when the last word is down. So here it does what 2 does.
+   *
+   * Nowhere else. SWT, SST and the essay are paragraphs you compose, and
+   * Enter there is a newline; on a page with no answer box it activates
+   * whichever button has focus. Bare Enter is gated by the page rather
+   * than by the box so neither of those gets hijacked. Ctrl+Enter is the
+   * key that submits everywhere.
+   *
+   * Matched at press time, like OFF_PATHS: the site is a SPA.
+   * ------------------------------------------------------------------ */
+  const WFD_PATH = /(^|\/)wfd\/?$/; // /wfd, /zh/wfd, /en/wfd
+  const onDictation = () => WFD_PATH.test(location.pathname);
 
   /* ------------------------------------------------------------------ *
    * Finding buttons by their visible label
@@ -750,6 +771,7 @@
    */
   function bareKeyLive(c) {
     const ctx = typingContext();
+    if (c === 'enter') return onDictation() && ctx !== 'number';
     if (ctx === 'none') return true;
     if (ctx === 'answer') return CONFIG.digitsWhileTyping && /^[0-9]$/.test(c);
     return false;
@@ -1007,6 +1029,7 @@
         ${speakingStrip()}
         <div class="ynwac-sc-fixed">
           <kbd>Esc</kbd> 离开输入框 leave the box ·
+          <kbd>Enter</kbd> 提交（仅 WFD，答题框内也行）submit on WFD only, even mid-answer ·
           <kbd>${pretty('alt+h')}</kbd> 按钮提示 button hints ·
           <kbd>${pretty('alt+k')}</kbd> 重新识别按钮 re-bind a button ·
           <kbd>${pretty('alt+0')}</kbd> 总开关 master on/off ·

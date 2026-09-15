@@ -138,6 +138,46 @@ check('Alt+I focuses the answer box', document.activeElement === answer);
 key({ key: 'j', code: 'KeyJ', altKey: true });
 check('Alt+J focuses the # field', document.activeElement === document.getElementById('b-num'));
 
+/* ---- 5a. Enter submits on WFD — the sentence is one line, so a newline is never what you meant ---- */
+answer.focus();
+reset();
+const enterTyped = key({ key: 'Enter', code: 'Enter' });
+check('bare Enter in the answer box -> 提交', last() === 'b-submit' && enterTyped.defaultPrevented, `got ${last()}`);
+
+answer.blur();
+reset();
+key({ key: 'Enter', code: 'Enter' });
+check('bare Enter outside any field -> 提交 too', last() === 'b-submit', `got ${last()}`);
+
+answer.focus();
+reset();
+const shiftEnter = key({ key: 'Enter', code: 'Enter', shiftKey: true });
+check('Shift+Enter is left alone', clicks().length === 0 && !shiftEnter.defaultPrevented);
+
+numBox.focus();
+reset();
+const enterInNum = key({ key: 'Enter', code: 'Enter' });
+check('Enter in the # box still jumps to that question, not 提交', clicks().length === 0 && !enterInNum.defaultPrevented);
+numBox.blur();
+
+window.history.pushState({}, '', '/zh/wfd');
+answer.focus();
+reset();
+key({ key: 'Enter', code: 'Enter' });
+check('Enter -> 提交 under /zh/wfd as well', last() === 'b-submit', `got ${last()}`);
+
+// Summarize Written Text is a paragraph you compose — Enter has to stay a newline.
+window.history.pushState({}, '', '/zh/swt');
+answer.focus();
+reset();
+const enterOnSwt = key({ key: 'Enter', code: 'Enter' });
+check('Enter on SWT is still a newline', clicks().length === 0 && !enterOnSwt.defaultPrevented);
+
+reset();
+key({ key: 'Enter', code: 'Enter', ctrlKey: true });
+check('Ctrl+Enter still submits on SWT', last() === 'b-submit', `got ${last()}`);
+window.history.pushState({}, '', '/wfd');
+
 /* ---- 6. macOS Option+S emits "ß" but code KeyS ---- */
 reset();
 answer.focus();
