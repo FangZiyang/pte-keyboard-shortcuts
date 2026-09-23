@@ -1,0 +1,82 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Write From Dictation, graded, fixture</title>
+<!--
+  /wfd, in the state the site leaves it in AFTER 提交.
+
+  The site renders the result as two word-by-word rows, one <span> per
+  word, and colours each one itself:
+
+    正确答案   the sentence as it should be; a red word is one you did not
+               get (missed, or spelt differently — the match is exact)
+    你的答案   what you typed; a red word is one that matches nothing
+
+  Unlike FIB-RW there is no per-question title — the header only says
+  "Write From Dictation (高频)" — so the sentence itself is the identity.
+
+  The mobile layout renders the same result a second time inside
+  .wfd-mobile-shell, hidden on desktop, so it is here too.
+-->
+<div class="pte-question-box relative overflow-hidden">
+  <div class="pte-question-header">
+    <span class="inline-flex items-center rounded-xl border border-blue-200">Question #128</span>
+    <span class="truncate whitespace-nowrap text-[19px] font-medium leading-tight text-slate-800">Write From Dictation (高频)</span>
+  </div>
+  <div class="mb-4"><textarea disabled>The employment demand in engineer is increasing rapid</textarea></div>
+  <div class="mb-4" id="result-slot">
+    <div class="space-y-3">
+      <div class="wfd-result-diff"><div class="wfd-diff-grid">
+        <section class="wfd-diff-block">
+          <h4 class="wfd-diff-title">正确答案</h4>
+          <div class="wfd-diff-content"><span class="inline-block mr-1 p-1 text-green-600 font-semibold">The</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">employment</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">demand</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">in</span><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">engineering</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">is</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">increasing</span><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">rapidly.</span></div>
+        </section>
+        <section class="wfd-diff-block">
+          <h4 class="wfd-diff-title">你的答案</h4>
+          <div class="wfd-diff-content"><span class="inline-block mr-1 p-1 text-green-600 font-semibold">The</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">employment</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">demand</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">in</span><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">engineer</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">is</span><span class="inline-block mr-1 p-1 text-green-600 font-semibold">increasing</span><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">rapid</span></div>
+        </section>
+      </div></div>
+      <div class="mt-3 text-center text-base font-semibold text-blue-600">得分: 6/8 个单词正确</div>
+    </div>
+  </div>
+  <div>
+    <button id="b-play" class="pte-toolbar-btn pte-toolbar-btn--secondary">▶ 播放</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+</div>
+
+<div class="block md:hidden w-full wfd-mobile-shell wfd-mobile-content-shell is-hidden">
+  <span class="wfd-mobile-qtag">WFD #128</span>
+  <div class="wfd-mobile-result-body">
+    <div class="wfd-result-diff"><div class="wfd-diff-grid">
+      <section class="wfd-diff-block">
+        <h4 class="wfd-diff-title">正确答案</h4>
+        <div class="wfd-diff-content"><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">The</span><span class="inline-block mr-1 p-1 bg-red-100 text-red-600 font-semibold">employment</span></div>
+      </section>
+      <section class="wfd-diff-block">
+        <h4 class="wfd-diff-title">你的答案</h4>
+        <div class="wfd-diff-content"><span class="text-gray-400 text-sm">未作答</span></div>
+      </section>
+    </div></div>
+  </div>
+</div>
+
+<script>
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>

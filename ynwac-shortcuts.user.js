@@ -2,9 +2,9 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.9.0
-// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks you keep missing, and exports them. Rebindable keys, on-button hints.
-// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空并可导出。快捷键可自定义，按钮上直接显示提示。
+// @version      1.10.0
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks and WFD words you keep missing, and exports them. Rebindable keys, on-button hints.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空和 WFD 总写错的词，并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -699,6 +699,179 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Write From Dictation — which words you keep missing
+   *
+   * Same idea as the FIB-RW log above: the site marks the sentence and
+   * forgets it, so the tally is kept here. After 提交 the page shows two
+   * rows of words, one <span> each, coloured by the site itself:
+   *
+   *   .wfd-result-diff
+   *     .wfd-diff-block  正确答案  a red word is one you did not get —
+   *                                missed, or spelt differently (the site
+   *                                matches words exactly)
+   *     .wfd-diff-block  你的答案  a red word is one that matches nothing;
+   *                                a lone grey 未作答 when the box was empty
+   *
+   * Blocks are read by position, not by heading, so /en reads the same.
+   * The mobile layout renders the same result a second time inside
+   * .wfd-mobile-shell, hidden on desktop — hence the visibility filter.
+   *
+   * There is no per-question title on WFD (the header only says "Write
+   * From Dictation (高频)"), so the correct sentence itself is the key:
+   * it survives the site renumbering its questions, and questionNumber
+   * rides along as a field for getting back to it.
+   * ------------------------------------------------------------------ */
+  const WFD_MISTAKES_KEY = 'wfd-mistakes';
+
+  function wfdResult() {
+    const diff = Array.from(document.querySelectorAll('.wfd-result-diff')).filter(isVisible)[0];
+    if (!diff) return null;
+    const blocks = diff.querySelectorAll('.wfd-diff-block');
+    if (blocks.length < 2) return null;
+
+    // Word spans only: the site pads with bare " " spans, and the empty
+    // answer is a grey 未作答 span with no inline-block on it.
+    const wordsOf = (block) =>
+      Array.from(block.querySelectorAll('.wfd-diff-content span.inline-block'))
+        .map((s) => ({ text: rawText(s), wrong: /bg-red-/.test(s.getAttribute('class') || '') }))
+        .filter((w) => w.text);
+
+    const right = wordsOf(blocks[0]);
+    const yours = wordsOf(blocks[1]);
+    if (!right.length) return null;
+
+    // The badge is "Question #N" on desktop and "WFD #N" on mobile.
+    let qnum = null;
+    for (let el = diff.parentElement; el && el !== document.body; el = el.parentElement) {
+      const m = rawText(el).match(/(?:Question|WFD) #(\d+)/);
+      if (m) {
+        qnum = Number(m[1]);
+        break;
+      }
+    }
+
+    return {
+      sentence: right.map((w) => w.text).join(' '),
+      words: right.map((w) => w.text),
+      qnum,
+      answer: yours.map((w) => w.text).join(' '),
+      missedIdx: right.map((w, i) => (w.wrong ? i : -1)).filter((i) => i >= 0),
+      wrong: yours.filter((w) => w.wrong).map((w) => w.text),
+    };
+  }
+
+  // As with lastGraded: one submit is many mutations, but 重置 → 提交 is
+  // a new attempt even with the same words, and 重置 takes the result off
+  // the page in between — which is what clears this.
+  let lastWfd = null;
+
+  function recordWfd() {
+    if (!onDictation()) return (lastWfd = null), undefined;
+    const res = wfdResult();
+    if (!res) return (lastWfd = null), undefined;
+
+    const sig = `${res.sentence}\n${res.answer}`;
+    if (sig === lastWfd) return;
+    lastWfd = sig;
+
+    const log = load(WFD_MISTAKES_KEY, {});
+    const at = new Date().toISOString();
+    const rec = log[res.sentence] || {
+      sentence: res.sentence,
+      words: res.words,
+      attempts: 0,
+      wrongCount: 0,
+      missCounts: res.words.map(() => 0),
+      history: [],
+    };
+    if (res.qnum) rec.questionNumber = res.qnum;
+
+    const missed = res.missedIdx.length;
+    rec.attempts += 1;
+    rec.history.push({
+      at,
+      answer: res.answer,
+      correct: res.words.length - missed,
+      total: res.words.length,
+      missed: res.missedIdx.map((i) => res.words[i]),
+      wrong: res.wrong,
+      ok: !missed,
+    });
+    if (rec.history.length > HISTORY_CAP) rec.history = rec.history.slice(-HISTORY_CAP);
+
+    // Like lastChosen on FIB-RW: the last time you got it WRONG, never
+    // the perfect answer you finally settled on.
+    if (missed) {
+      rec.wrongCount += 1;
+      res.missedIdx.forEach((i) => (rec.missCounts[i] = (rec.missCounts[i] || 0) + 1));
+      rec.lastAnswer = res.answer;
+      rec.lastAttemptAt = at;
+    }
+    log[res.sentence] = rec;
+    save(WFD_MISTAKES_KEY, log);
+
+    if (missed) {
+      const where = res.qnum ? `#${res.qnum} ` : '';
+      toast(`✍️ ${where}记下 ${missed} 个错词 / ${missed} missed word${missed > 1 ? 's' : ''} logged`);
+    }
+  }
+
+  let wfdTimer = null;
+  const scheduleWfd = () => {
+    clearTimeout(wfdTimer);
+    wfdTimer = setTimeout(recordWfd, 250);
+  };
+
+  function exportWfd() {
+    const log = load(WFD_MISTAKES_KEY, {});
+    const items = Object.keys(log)
+      .map((k) => log[k])
+      .filter((r) => r && r.wrongCount > 0)
+      .map((r) => ({
+        sentence: r.sentence,
+        questionNumber: r.questionNumber || null,
+        attempts: r.attempts,
+        wrongCount: r.wrongCount,
+        words: r.words.map((w, i) => ({ word: w, missCount: r.missCounts[i] || 0 })),
+        lastAnswer: r.lastAnswer || '',
+        lastAttemptAt: r.lastAttemptAt || '',
+        history: (r.history || []).map((h) => ({
+          at: h.at,
+          answer: h.answer || '',
+          correct: h.correct,
+          total: h.total,
+          missed: h.missed || [],
+          wrong: h.wrong || [],
+          ok: !!h.ok,
+        })),
+      }))
+      .sort(
+        (a, b) =>
+          (a.questionNumber || Infinity) - (b.questionNumber || Infinity) || a.sentence.localeCompare(b.sentence)
+      );
+
+    if (!items.length) {
+      toast('还没有记录到 WFD 错题 / no WFD mistakes logged yet', true);
+      return 0;
+    }
+
+    const payload = {
+      schema: 'wfd-mistakes/1',
+      exportedAt: new Date().toISOString(),
+      timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
+      items,
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'wfd-mistakes.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`已导出 ${items.length} 句 / exported ${items.length} sentences`);
+    return items.length;
+  }
+
+  /* ------------------------------------------------------------------ *
    * Key naming
    * ------------------------------------------------------------------ */
 
@@ -1042,7 +1215,8 @@
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="showToast"> 显示操作提示 / show toast</label>
         <div class="ynwac-sc-foot">
           <button type="button" class="ynwac-sc-reset">恢复默认 Reset to defaults</button>
-          <button type="button" class="ynwac-sc-export" title="FIB-RW 的错空只记在本机，导出前不会离开浏览器 · FIB-RW misses are logged in this browser and go nowhere until you export">导出错题 JSON / Export mistakes</button>
+          <button type="button" class="ynwac-sc-export ynwac-sc-export-fibrw" title="FIB-RW 的错空只记在本机，导出前不会离开浏览器 · FIB-RW misses are logged in this browser and go nowhere until you export">导出 FIB-RW 错题 / Export FIB-RW</button>
+          <button type="button" class="ynwac-sc-export ynwac-sc-export-wfd" title="WFD 的错词只记在本机，导出前不会离开浏览器 · WFD misses are logged in this browser and go nowhere until you export">导出 WFD 错题 / Export WFD</button>
           <span class="ynwac-sc-note">和翻译插件冲突？点“改键”换一个 · Clashes with a translator extension? Hit Rebind.</span>
         </div>
       </div>`;
@@ -1067,7 +1241,8 @@
       refreshHints();
       toast('已恢复默认快捷键 / defaults restored');
     });
-    panelEl.querySelector('.ynwac-sc-export').addEventListener('click', exportFibrw);
+    panelEl.querySelector('.ynwac-sc-export-fibrw').addEventListener('click', exportFibrw);
+    panelEl.querySelector('.ynwac-sc-export-wfd').addEventListener('click', exportWfd);
     panelEl.querySelectorAll('.ynwac-sc-rebind').forEach((btn) => {
       btn.addEventListener('click', () => startCapture(btn.dataset.act, btn));
     });
@@ -1273,12 +1448,14 @@
     if (records.every(fromUs)) return;
     scheduleHints();
     scheduleFibrw();
+    scheduleWfd();
   });
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   refreshHints();
   migrateFibrw();
   // A question graded before the script woke up still counts.
   scheduleFibrw();
+  scheduleWfd();
 
   // Not on an off page: the greeting would be announcing keys that do
   // nothing here, and it would burn the one time it gets to be shown.

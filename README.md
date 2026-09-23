@@ -205,7 +205,7 @@ It reads the graded page and nothing else — no ids, no API, no network. After 
 
 Every graded submit adds one `attempts` to each blank and one `wrongCount` to the ones you missed, so doing a question again accumulates rather than overwrites. Records are keyed by **question title plus blank number**, never by the site's own ids — those can be renumbered by any deploy, and the title is what an offline question bank can be joined on.
 
-**导出错题 JSON / Export mistakes** in the panel (<kbd>Alt</kbd>+<kbd>/</kbd>) downloads `fibrw-mistakes.json`:
+**导出 FIB-RW 错题 / Export FIB-RW** in the panel (<kbd>Alt</kbd>+<kbd>/</kbd>) downloads `fibrw-mistakes.json`:
 
 ```json
 {
@@ -249,6 +249,50 @@ The pre-upgrade log is copied to `ynwac-shortcuts:fibrw-mistakes-backup-v1` and 
 **It stays in your browser.** The log lives in `localStorage` under `ynwac-shortcuts:fibrw-mistakes` and goes nowhere until you press export. Clearing site data clears it.
 
 This is only `/fibrw`. `/fibr` — Reading: Fill in the Blanks, the drag-a-word-bank one — is a different question type and is not touched.
+
+## WFD: the words you keep missing
+
+Write From Dictation gets the same treatment. After 提交 the site lays the sentence out twice, word by word — **正确答案** with the words you did not get in red, **你的答案** with the words that matched nothing in red — and the script reads those colours back. Nothing else: no ids, no API, no network. The match is the site's own, so a misspelling shows up both as a missed word and as a wrong one, and case counts.
+
+There is no per-question title on WFD, so a record is keyed on **the correct sentence itself**, verbatim. `questionNumber` rides along as a field, as on FIB-RW.
+
+Every submit adds one `attempts`; a submit that missed anything also adds one `wrongCount`, and one to the miss count of each word position it missed — positions rather than words, because a sentence can use the same word twice. Doing a sentence again accumulates. 重置 → 提交 with the very same words is still a second attempt.
+
+**导出 WFD 错题 / Export WFD** in the panel downloads `wfd-mistakes.json`:
+
+```json
+{
+  "schema": "wfd-mistakes/1",
+  "exportedAt": "2026-09-23T20:00:00.000Z",
+  "timezone": "America/Toronto",
+  "items": [
+    {
+      "sentence": "The employment demand in engineering is increasing rapidly.",
+      "questionNumber": 128,
+      "attempts": 2,
+      "wrongCount": 1,
+      "words": [
+        { "word": "The", "missCount": 0 },
+        { "word": "employment", "missCount": 1 },
+        { "word": "rapidly.", "missCount": 1 }
+      ],
+      "lastAnswer": "The employ",
+      "lastAttemptAt": "2026-09-23T19:12:40.118Z",
+      "history": [
+        { "at": "2026-09-23T19:12:40.118Z", "answer": "The employ", "correct": 1, "total": 8,
+          "missed": ["employment", "demand", "in", "engineering", "is", "increasing", "rapidly."],
+          "wrong": ["employ"], "ok": false },
+        { "at": "2026-09-23T19:20:02.004Z", "answer": "The employment demand in engineering is increasing rapidly.",
+          "correct": 8, "total": 8, "missed": [], "wrong": [], "ok": true }
+      ]
+    }
+  ]
+}
+```
+
+(`words` is trimmed above; the file has one entry per word of the sentence.) Words keep the punctuation the site shows them with, so the last one is `rapidly.`. Only sentences with `wrongCount > 0` are exported. `lastAnswer` and `lastAttemptAt` are the last **wrong** attempt; `history` is capped at 50 entries per sentence, like FIB-RW.
+
+The log lives in `localStorage` under `ynwac-shortcuts:wfd-mistakes`, and only `/wfd` is read.
 
 ## Where the script stays off
 
@@ -414,7 +458,7 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 
 每提交一次，每个空的 `attempts` 加一，错的那几个 `wrongCount` 再加一——同一道题再做是**累加**，不是覆盖。记录用**题目标题 + 空序号**做键，不用网站内部的数字 id——那个一发版就可能重排，而标题是本地题库能对齐的东西。
 
-面板（<kbd>Alt</kbd>+<kbd>/</kbd>）里的 **导出错题 JSON** 会下载 `fibrw-mistakes.json`，格式见上面英文部分。
+面板（<kbd>Alt</kbd>+<kbd>/</kbd>）里的 **导出 FIB-RW 错题** 会下载 `fibrw-mistakes.json`，格式见上面英文部分。
 
 `questionNumber` 就是网站上的 **Question #N**，也就是你往 `#` 框里填的那个数。没它的话，想回到一个错空就只能拿着标题在 67 道题里一页页翻。它只是一个字段；记录的**键**仍然是标题 + 空序号，因为站点一发版就可能重排编号，而本地题库只能靠标题对齐。
 
@@ -427,6 +471,18 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 **数据不出浏览器。** 存在 `localStorage` 的 `ynwac-shortcuts:fibrw-mistakes` 里，不点导出就不会发往任何地方；清网站数据会一并清掉。
 
 只对 `/fibrw` 生效。`/fibr`（Reading FIB，整篇共用一个拖拽词库的那个）是另一个题型，不碰。
+
+### WFD：总写错的那几个词
+
+Write From Dictation 也一样记。提交后网站会把句子逐词排两遍——**正确答案**里你没写对的词标红，**你的答案**里对不上的词标红——脚本就读这些颜色，不碰 id、不调接口、不联网。对错是网站自己判的：拼错一个词会同时算“漏掉的词”和“写错的词”，大小写也算。
+
+WFD 没有题目标题，所以记录用**正确答案整句**（原样）做键；`questionNumber` 和 FIB-RW 一样作为字段附带。
+
+每提交一次 `attempts` 加一；只要有漏词，`wrongCount` 加一，漏掉的每个**词位**的计数也加一——按位置而不是按单词记，因为一句里同一个词可能出现两次。同一句再做是累加；重置后用一模一样的内容再交，也算新的一次。
+
+面板里的 **导出 WFD 错题** 会下载 `wfd-mistakes.json`，格式见上面英文部分。只导出 `wrongCount > 0` 的句子；`lastAnswer` 和 `lastAttemptAt` 指最后一次做错的那次；`history` 每句最多保留 50 条。
+
+数据存在 `localStorage` 的 `ynwac-shortcuts:wfd-mistakes` 里，只在 `/wfd` 上读取。
 
 ### 哪些页面不生效
 
@@ -450,7 +506,7 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 
 The script is a single dependency-free file — edit `ynwac-shortcuts.user.js` and reload the page.
 
-`test/` drives the script against six jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, the WFD toolbar again under a `/we` URL, where every key has to do nothing at all, a graded `/fibrw` question, where the mistake log and its export are checked end to end, and a log written by an older version, where the upgrade has to add fields without disturbing a single count:
+`test/` drives the script against seven jsdom fixtures — the WFD toolbar (including the `重置进度` button that must never be hit by accident), the RA/RS recorder pill, where the number row swaps and the three 重置-ish buttons have to stay apart, the FIBL page, where a hidden mobile player shares the DOM with the unlabelled desktop one, the WFD toolbar again under a `/we` URL, where every key has to do nothing at all, a graded `/fibrw` question, where the mistake log and its export are checked end to end, a log written by an older version, where the upgrade has to add fields without disturbing a single count, and a graded `/wfd` sentence, where a hidden mobile copy of the result must not be read:
 
 ```bash
 npm install && npm test
@@ -467,7 +523,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. All six fixtures must be green:
+5. All seven fixtures must be green:
    ```bash
    npm test
    ```
