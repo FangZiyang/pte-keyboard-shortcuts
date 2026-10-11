@@ -2,9 +2,9 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.11.0
-// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs what you keep missing on RO, Reading FIB, FIB-RW, WFD and Listening FIB, and exports it. Rebindable keys, on-button hints.
-// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 RO、Reading FIB、FIB-RW、WFD、Listening FIB 的错题，并可导出。快捷键可自定义，按钮上直接显示提示。
+// @version      1.12.0
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs what you keep missing on RO, Reading FIB, FIB-RW, WFD and Listening FIB, keeps every Repeat Sentence AI score, and exports them. Rebindable keys, on-button hints.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 RO、Reading FIB、FIB-RW、WFD、Listening FIB 的错题和 RS 的每次 AI 评分，并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -1152,6 +1152,169 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Repeat Sentence — every AI score, so the weak sentences can be found
+   *
+   * Not a mistakes log: a spoken answer is never simply right or wrong,
+   * so every scored take is kept and the export carries all of them, the
+   * lowest average first. After AI 评分 the question box grows a result
+   * card, read by position since its headings carry no classes:
+   *
+   *   span.rounded-2xl ×5   总分, 发音准确, 流利度, 完整度, 录音识别度 %
+   *   span.h-8.w-8 ×5       how many words were 发音错误, 遗漏, 插入内容,
+   *                         意外中断, 缺少停顿
+   *   div.min-h-[220px]     the reference sentence, one span per word,
+   *                         styled by what went wrong with it — an
+   *                         omitted word is struck through (slate)
+   *   <table>               单词评分: one cell per word, word over score;
+   *                         spare cells hold "-"
+   *
+   * The per-word styles other than the strike-through are read from the
+   * legend's colours (amber 发音错误, red 插入内容, pink 意外中断) — a word
+   * the site marks as inserted is not part of the reference sentence, so
+   * it is kept out of the sentence that keys the record.
+   *
+   * Like WFD there is no per-question title, so the reference sentence is
+   * the key. Nothing is stored until a score is on the page, and the card
+   * goes away on 重录 and on every new question.
+   * ------------------------------------------------------------------ */
+  const RS_SCORES_KEY = 'rs-scores';
+  const RS_PATH = /(^|\/)rs\/?$/;
+
+  function rsResult() {
+    const box = questionBox();
+    const sentenceEl = box && Array.from(box.querySelectorAll('div.min-h-\\[220px\\]')).filter(isVisible)[0];
+    if (!sentenceEl) return null;
+    let card = sentenceEl;
+    while (card && card !== box && !card.querySelector('table')) card = card.parentElement;
+    if (!card) return null;
+
+    const num = (el) => parseFloat(rawText(el));
+    const scores = Array.from(card.querySelectorAll('span.rounded-2xl')).map(num);
+    if (scores.length < 5 || scores.slice(0, 5).some(isNaN)) return null;
+    const counts = Array.from(card.querySelectorAll('span.h-8.w-8')).map((el) => num(el) || 0);
+
+    const spans = Array.from(sentenceEl.children);
+    const byStyle = (re) => spans.filter((s) => re.test(s.getAttribute('class') || '')).map(rawText).filter(Boolean);
+    const inserted = /(bg|text)-red-/;
+    const sentence = spans
+      .filter((s) => !inserted.test(s.getAttribute('class') || ''))
+      .map((s) => s.textContent)
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!sentence) return null;
+
+    const words = Array.from(card.querySelectorAll('td'))
+      .map((td) => td.querySelectorAll('div'))
+      .filter((d) => d.length >= 2)
+      .map((d) => ({ word: rawText(d[0]), score: num(d[1]) }))
+      .filter((w) => w.word && !isNaN(w.score));
+
+    return {
+      sentence,
+      qnum: questionNumber(box),
+      total: scores[0],
+      pronunciation: scores[1],
+      fluency: scores[2],
+      completeness: scores[3],
+      recognition: scores[4],
+      counts: {
+        mispronounced: counts[0] || 0,
+        omitted: counts[1] || 0,
+        inserted: counts[2] || 0,
+        unexpectedBreak: counts[3] || 0,
+        missingPause: counts[4] || 0,
+      },
+      words,
+      omittedWords: byStyle(/line-through/),
+      mispronouncedWords: byStyle(/(bg|text)-amber-/),
+      insertedWords: byStyle(inserted),
+    };
+  }
+
+  let lastRs = null;
+
+  function recordRs() {
+    if (!RS_PATH.test(location.pathname)) return (lastRs = null), undefined;
+    const res = rsResult();
+    if (!res) return (lastRs = null), undefined;
+
+    const sig = JSON.stringify([res.sentence, res.total, res.pronunciation, res.fluency, res.completeness, res.words]);
+    if (sig === lastRs) return;
+    lastRs = sig;
+
+    const log = load(RS_SCORES_KEY, {});
+    const rec = log[res.sentence] || { sentence: res.sentence, attempts: 0, history: [] };
+    if (res.qnum) rec.questionNumber = res.qnum;
+    rec.attempts += 1;
+    rec.history.push({
+      at: new Date().toISOString(),
+      total: res.total,
+      pronunciation: res.pronunciation,
+      fluency: res.fluency,
+      completeness: res.completeness,
+      recognition: res.recognition,
+      counts: res.counts,
+      words: res.words,
+      omittedWords: res.omittedWords,
+      mispronouncedWords: res.mispronouncedWords,
+      insertedWords: res.insertedWords,
+    });
+    if (rec.history.length > HISTORY_CAP) rec.history = rec.history.slice(-HISTORY_CAP);
+    log[res.sentence] = rec;
+    save(RS_SCORES_KEY, log);
+
+    const where = res.qnum ? `#${res.qnum} ` : '';
+    toast(`🎙️ ${where}记下 RS 评分 ${res.total} / RS score ${res.total} logged`);
+  }
+
+  let rsTimer = null;
+  const scheduleRs = () => {
+    clearTimeout(rsTimer);
+    rsTimer = setTimeout(recordRs, 250);
+  };
+
+  const mean = (xs) => (xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null);
+
+  function exportRs() {
+    const log = load(RS_SCORES_KEY, {});
+    const items = Object.keys(log)
+      .map((k) => log[k])
+      .filter((r) => r && r.history && r.history.length)
+      .map((r) => {
+        const h = r.history;
+        const last = h[h.length - 1];
+        // Per word, averaged over every take that scored it — the words
+        // that keep coming out badly, lowest first.
+        const perWord = {};
+        h.forEach((t) => (t.words || []).forEach((w) => (perWord[w.word] = (perWord[w.word] || []).concat(w.score))));
+        return {
+          sentence: r.sentence,
+          questionNumber: r.questionNumber || null,
+          attempts: r.attempts,
+          averageTotal: mean(h.map((t) => t.total)),
+          bestTotal: Math.max(...h.map((t) => t.total)),
+          lastTotal: last.total,
+          lastAttemptAt: last.at,
+          weakWords: Object.keys(perWord)
+            .map((word) => ({ word, averageScore: mean(perWord[word]), takes: perWord[word].length }))
+            .sort((a, b) => a.averageScore - b.averageScore),
+          history: h,
+        };
+      })
+      // Weakest first: this is the list you drill from.
+      .sort((a, b) => a.averageTotal - b.averageTotal || (a.questionNumber || Infinity) - (b.questionNumber || Infinity));
+
+    if (!items.length) {
+      toast('还没有记录到 RS 评分 / no RS scores logged yet', true);
+      return 0;
+    }
+    download('rs-scores.json', 'rs-scores/1', items);
+    toast(`已导出 ${items.length} 句 / exported ${items.length} sentences`);
+    return items.length;
+  }
+
+  /* ------------------------------------------------------------------ *
    * Key naming
    * ------------------------------------------------------------------ */
 
@@ -1483,6 +1646,7 @@
     ['fibrw', 'FIB-RW'],
     ['wfd', 'WFD'],
     ['fibl', 'Listening FIB'],
+    ['rs', 'RS 评分'],
   ];
 
   function panelHTML() {
@@ -1542,7 +1706,8 @@
     });
     panelEl.querySelectorAll('[data-export]').forEach((btn) => {
       const kind = btn.dataset.export;
-      btn.addEventListener('click', () => (kind === 'ro' ? exportRo() : kind === 'wfd' ? exportWfd() : exportBlanks(BLANK_LOGS[kind])));
+      const own = { ro: exportRo, wfd: exportWfd, rs: exportRs }[kind];
+      btn.addEventListener('click', () => (own ? own() : exportBlanks(BLANK_LOGS[kind])));
     });
     panelEl.querySelectorAll('.ynwac-sc-rebind').forEach((btn) => {
       btn.addEventListener('click', () => startCapture(btn.dataset.act, btn));
@@ -1750,6 +1915,7 @@
     scheduleHints();
     scheduleBlanks();
     scheduleRo();
+    scheduleRs();
     scheduleWfd();
   });
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
@@ -1758,6 +1924,7 @@
   // A question graded before the script woke up still counts.
   scheduleBlanks();
   scheduleRo();
+  scheduleRs();
   scheduleWfd();
 
   // Not on an off page: the greeting would be announcing keys that do

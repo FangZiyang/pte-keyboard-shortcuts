@@ -324,6 +324,12 @@ Three more question types keep a log, read off the graded page the same way. Eac
 
 Logs: `ynwac-shortcuts:fibr-mistakes`, `…:fibl-mistakes`, `…:ro-mistakes`. Nothing leaves the browser until you export.
 
+## RS: every AI score
+
+Repeat Sentence is not right-or-wrong, so it is not a mistakes log: **every AI 评分 is kept**. After scoring, the card under the toolbar is read — 总分, 发音准确, 流利度, 完整度, 录音识别度, the five problem counts (发音错误, 遗漏, 插入内容, 意外中断, 缺少停顿), and the 单词评分 table, one score per word. Like WFD there is no title, so the record is keyed on the reference sentence (a word the site marks as *inserted* is left out of it).
+
+**RS 评分 / Export** downloads `rs-scores.json` (schema `rs-scores/1`), **weakest sentence first**: each item has `averageTotal`, `bestTotal`, `lastTotal`, `weakWords` (every word's average score across takes, lowest first) and the full `history` of takes. 重录 → AI 评分 again is a new take. The log is `ynwac-shortcuts:rs-scores`, and only `/rs` is read.
+
 ## Where the script stays off
 
 **Write Email (`/we`) is excluded outright** — no shortcuts, no chips, not even the panel.
@@ -525,6 +531,12 @@ WFD 没有题目标题，所以记录用**正确答案整句**（原样）做键
 **Reorder Paragraphs（`/ro`）** 按题记。每段前面的编号（`2.`）跟着段落走，拖到哪都不变，所以顺序就记成编号列表。提交后排对位置的段变绿，排错的变红并写着“正确位置: N”，脚本由此拼出完整的正确顺序。导出 `ro-mistakes.json`，格式见上面英文部分：`correctOrder` 正确顺序、`lastOrder` 最后一次排错的顺序、`paragraphs` 按正确顺序的段落原文；`history` 每次一条，`inPlace` 是网站的算法（几段在对的位置），`pairsRight` 是 PTE 的算法（相邻两段排对了几对）。
 
 数据存在 `ynwac-shortcuts:fibr-mistakes`、`…:fibl-mistakes`、`…:ro-mistakes` 里，不点导出不会离开浏览器。
+
+### RS：每次 AI 评分都记
+
+Repeat Sentence 没有对错，所以不是错题本，而是**每次 AI 评分都存下来**：总分、发音准确、流利度、完整度、录音识别度，五类问题的个数（发音错误、遗漏、插入内容、意外中断、缺少停顿），还有“单词评分”里每个词的分数。RS 没有标题，按参考原句记（网站标成“插入”的词不算进句子）。
+
+面板里 **RS 评分** 导出 `rs-scores.json`，**最差的句子排最前**：每句有平均分 `averageTotal`、最高分、最近一次分数，`weakWords` 是每个词在所有录音里的平均分（低的在前），`history` 是每一次的完整评分。重录后再评一次算新的一次。数据存在 `ynwac-shortcuts:rs-scores`，只在 `/rs` 上读取。
 
 ### 哪些页面不生效
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Repeat Sentence scored fixture</title>
+<!--
+  /rs after 录音 → AI 评分, shaped on the live page. The score card sits
+  inside the question box under the toolbar: five rounded-2xl scores
+  (总分, 发音准确, 流利度, 完整度, 录音识别度 %), five h-8 counts, the
+  reference sentence one span per word, and a word-score table padded
+  with "-" cells.
+
+  This take: "to" omitted (struck through), "pass" mispronounced (amber),
+  "um" inserted (red) — the inserted word is not part of the sentence.
+  The mobile layout keeps a hidden second card.
+-->
+<div class="is-hidden rs-mobile-shell">
+  <div class="min-h-[220px]"><span class="mx-[2px] inline cursor-pointer">Ghost</span></div>
+  <table><tr><td><div>ghost</div><div>1.0</div></td></tr></table>
+</div>
+
+<div class="pte-question-box">
+  <div class="pte-question-header">
+    <span class="inline-flex">Question #<!-- -->5</span>
+    <span class="truncate whitespace-nowrap text-[19px] font-medium">Repeat Sentence</span>
+  </div>
+  <div class="pte-rec-pill"><button class="pte-rec-pill__main" title="录音控制"></button><button class="pte-rec-pill__submit" disabled>已完成评分</button><button class="pte-rec-pill__reset" title="重置"></button></div>
+  <div class="pte-content-area">
+    <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary">提交</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+  <div id="result">
+<div class="rounded-lg border bg-white p-4 mb-2">
+  <div class="mb-6">
+    <div class="mb-6 flex items-center justify-between gap-4"><div class="flex items-center gap-3"><h3 class="text-base font-semibold text-gray-900">评分结果</h3><span class="rounded-2xl bg-white px-4 py-2 text-2xl font-bold">61</span></div></div>
+    <div class="flex flex-wrap items-center justify-between gap-5">
+      <div class="flex items-center gap-3"><span class="inline-flex h-3 w-3 rounded-full bg-blue-500"></span><span>发音准确</span><span class="rounded-2xl bg-white px-4 py-2 text-2xl font-bold">58</span></div>
+      <div class="flex items-center gap-3"><span class="inline-flex h-3 w-3 rounded-full bg-green-500"></span><span>流利度</span><span class="rounded-2xl bg-white px-4 py-2 text-2xl font-bold">64</span></div>
+      <div class="flex items-center gap-3"><span class="inline-flex h-3 w-3 rounded-full bg-purple-500"></span><span>完整度</span><span class="rounded-2xl bg-white px-4 py-2 text-2xl font-bold">71</span></div>
+      <div class="flex items-center gap-3"><span class="inline-flex h-3 w-3 rounded-full bg-gray-500"></span><span>录音识别度</span><span class="rounded-2xl bg-white px-4 py-2 text-2xl font-bold">83%</span></div>
+    </div>
+  </div>
+  <div class="mt-4">
+    <h3>识别结果</h3>
+    <div class="overflow-hidden rounded-2xl border border-gray-200"><div class="grid">
+      <div class="border-b p-5"><div class="min-h-[220px] text-[18px] leading-[2.6rem]"><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 text-gray-800">You</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 text-gray-800">need</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 text-slate-400 line-through decoration-slate-400 decoration-2">to</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 bg-amber-100 text-amber-800">pass</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 bg-red-100 text-red-700">um</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 text-gray-800">the</span><span class=""> </span><span class="mx-[2px] inline cursor-pointer transition hover:opacity-80 text-gray-800">exam</span><span class="text-gray-800">.</span></div></div>
+      <div class="p-5"><div class="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-4"><span class="inline-flex h-8 w-8 items-center justify-center rounded-none text-[18px] bg-amber-100 text-amber-800">1</span><div class="flex min-w-0 items-center gap-2"><span class="truncate">发音错误</span></div></div><div class="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-4"><span class="inline-flex h-8 w-8 items-center justify-center rounded-none text-[18px] bg-slate-100 text-slate-700">1</span><div class="flex min-w-0 items-center gap-2"><span class="truncate">遗漏</span></div></div><div class="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-4"><span class="inline-flex h-8 w-8 items-center justify-center rounded-none text-[18px] bg-red-100 text-red-700">1</span><div class="flex min-w-0 items-center gap-2"><span class="truncate">插入内容</span></div></div><div class="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-4"><span class="inline-flex h-8 w-8 items-center justify-center rounded-none text-[18px] bg-pink-200 text-pink-900">0</span><div class="flex min-w-0 items-center gap-2"><span class="truncate">意外中断</span></div></div><div class="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-4"><span class="inline-flex h-8 w-8 items-center justify-center rounded-none text-[18px] bg-slate-300 text-slate-900">2</span><div class="flex min-w-0 items-center gap-2"><span class="truncate">缺少停顿</span></div></div></div>
+    </div></div>
+  </div>
+  <div class="mt-4"><h3>单词评分</h3><div class="mt-4 overflow-x-auto"><table class="min-w-full bg-white border border-gray-200 rounded"><tbody><tr><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">you</div><div class="font-bold text-green-600">90.0</div></td><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">need</div><div class="font-bold text-green-600">85.5</div></td><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">to</div><div class="font-bold text-red-600">0.0</div></td><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">pass</div><div class="font-bold text-red-600">42.0</div></td><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">the</div><div class="font-bold text-green-600">88.0</div></td><td class="py-2 px-1 border-b text-xs text-center"><div class="font-medium">exam</div><div class="font-bold text-yellow-600">70.0</div></td><td class="py-2 px-1 border-b text-xs text-center">-</td><td class="py-2 px-1 border-b text-xs text-center">-</td><td class="py-2 px-1 border-b text-xs text-center">-</td><td class="py-2 px-1 border-b text-xs text-center">-</td></tr></tbody></table></div></div>
+</div>
+  </div>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over — that text is what the other repo has to parse.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>
