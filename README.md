@@ -23,13 +23,13 @@ Each site gets its own script — the shortcuts stay the same, only the button-m
 | **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
 | **FIBL** · **HIW** · **SMW** · listening **MC** | 播放 | 提交 | 重置 | 下一题 | – |
 
-One hand, four keys, in the order you press them. <kbd>4</kbd> is 下一题 on every question type.
+One hand, four keys, in the order you press them. <kbd>4</kbd> is 下一题 on every question type — and so is <kbd>→</kbd>, whenever the cursor is not in a text field (<kbd>←</kbd> is 上一题).
 
 Speaking questions have no answer box and nothing worth submitting — the loop there is **听 → 说 → 看分 → 下一题** — so <kbd>2</kbd> and <kbd>3</kbd> point at the recorder's own controls instead. The script switches automatically when the recorder is on the page.
 
 Nothing is lost in the swap: the toolbar actions keep their letter alternates everywhere (<kbd>Alt</kbd>+<kbd>S</kbd> 提交, <kbd>Alt</kbd>+<kbd>R</kbd> 重置), and each recorder control also has a direct key of its own — <kbd>6</kbd> 录音, <kbd>7</kbd> 跳过准备 (RA), <kbd>8</kbd> AI 评分.
 
-**上一题 has no number.** It's a once-an-evening key, and spending a digit on it pushed 下一题 — pressed on every single question — out to <kbd>5</kbd>. It still answers to <kbd>Alt</kbd>+<kbd>B</kbd> and <kbd>Alt</kbd>+<kbd>←</kbd>.
+**上一题 has no number.** It's a once-an-evening key, and spending a digit on it pushed 下一题 — pressed on every single question — out to <kbd>5</kbd>. It answers to <kbd>←</kbd>, <kbd>Alt</kbd>+<kbd>B</kbd> and <kbd>Alt</kbd>+<kbd>←</kbd>.
 
 Other question types that reuse the same toolbar should work without changes — buttons are matched by what they are, not by which page you're on. A key with no button on the current page simply does nothing.
 
@@ -93,12 +93,12 @@ On a speaking question the same keys follow the recorder instead:
 | <kbd>1</kbd> | 播放 Play / 停止 Stop | same |
 | <kbd>2</kbd> | 提交 Submit | **停止录音** Stop recording |
 | <kbd>3</kbd> | 重置 Reset this question | **AI 评分** AI-score the take |
-| <kbd>4</kbd> | 下一题 Next | same |
+| <kbd>4</kbd> / <kbd>→</kbd> | 下一题 Next — <kbd>→</kbd> outside a text field, where it would otherwise move the cursor | same |
 | <kbd>5</kbd> | — | **重录** Record again |
 | <kbd>6</kbd> | 录音 Record / stop — RA, RS | |
 | <kbd>7</kbd> | 跳过准备 Skip the prep countdown — RA | |
 | <kbd>8</kbd> | AI 评分 AI-score the take — RA, RS | |
-| <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 Previous | |
+| <kbd>←</kbd> / <kbd>Alt</kbd> + <kbd>B</kbd> / <kbd>Alt</kbd> + <kbd>←</kbd> | 上一题 Previous — bare <kbd>←</kbd> outside a text field | |
 | <kbd>Enter</kbd> | 提交 Submit — **WFD only**, and it works with the cursor still in the answer box | |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | 提交 Submit — every question type | |
 | <kbd>Alt</kbd> + <kbd>Enter</kbd> | 下一题 Next | |
@@ -179,6 +179,8 @@ In the panel (<kbd>Alt</kbd>+<kbd>/</kbd>):
 
 Settings persist in `localStorage` per browser.
 
+> **Upgrading to 1.11.0 resets your rebinds once**, because <kbd>→</kbd> / <kbd>←</kbd> became the first keys of 下一题 / 上一题 — the keys drawn on those buttons. Options and re-taught button labels are kept.
+>
 > **Upgrading from 1.4.x or earlier resets your rebinds once.** The number row changed shape in 1.5.0 (下一题 moved to <kbd>4</kbd>), and merging an old saved set would have left half the row pointing at the previous meaning. Options and re-taught button labels are kept.
 
 ## If a shortcut says "button not found"
@@ -294,6 +296,34 @@ Every submit adds one `attempts`; a submit that missed anything also adds one `w
 
 The log lives in `localStorage` under `ynwac-shortcuts:wfd-mistakes`, and only `/wfd` is read.
 
+## RO, Reading FIB, Listening FIB: the same idea
+
+Three more question types keep a log, read off the graded page the same way. Each has its own export button in the panel, next to FIB-RW and WFD. Records are keyed by question title, and `questionNumber` rides along.
+
+**Reading FIB (`/fibr`) and Listening FIB (`/fibl`)** log per blank, in exactly the FIB-RW record and export shape (`fibr-mistakes.json`, schema `fibr-mistakes/1`; `fibl-mistakes.json`, schema `fibl-mistakes/1`). After 提交 both pages put a green or red mark behind every gap with the right answer in brackets, and that mark is all that is read. `lastChosen` is the word you dragged in (Reading) or typed (Listening), `""` for a gap left empty. Listening FIB is graded by the site ignoring case and stray spaces — `Sugar ` counts as right for *sugar* — and the log believes the site.
+
+**Reorder Paragraphs (`/ro`)** logs per question. Each paragraph carries a label (`2.`) that travels with it however you drag it, so an order is written as a list of labels. After 提交 a paragraph is green if it sits in the right slot, and red with `正确位置: N` if not; between them the full correct order is read back off the page. `ro-mistakes.json`, schema `ro-mistakes/1`:
+
+```json
+{
+  "title": "Brazilian Folk Music Research",
+  "questionNumber": 1,
+  "attempts": 2,
+  "wrongCount": 1,
+  "correctOrder": [2, 1, 3, 4],
+  "paragraphs": [{ "label": 2, "text": "Early in 1938, Mario de Andrade, …" }, "…"],
+  "lastOrder": [2, 1, 4, 3],
+  "lastAttemptAt": "2026-10-11T15:39:13.083Z",
+  "history": [
+    { "at": "…", "order": [2, 1, 4, 3], "inPlace": 2, "total": 4, "pairsRight": 1, "pairsTotal": 3, "misplaced": [4, 3], "ok": false }
+  ]
+}
+```
+
+`inPlace` is how the site scores (paragraphs in the right slot); `pairsRight` is how PTE scores (adjacent pairs in the right order). `paragraphs` is in the correct order.
+
+Logs: `ynwac-shortcuts:fibr-mistakes`, `…:fibl-mistakes`, `…:ro-mistakes`. Nothing leaves the browser until you export.
+
 ## Where the script stays off
 
 **Write Email (`/we`) is excluded outright** — no shortcuts, no chips, not even the panel.
@@ -329,13 +359,13 @@ If you want another long-form writing type out too — Summarize Written Text ha
 | **RA** Read Aloud · **RS** Repeat Sentence | 播放 | 停止录音 | AI 评分 | 下一题 | 重录 |
 | **FIBL** · **HIW** · **SMW** · 听力选择题 | 播放 | 提交 | 重置 | 下一题 | – |
 
-一只手四个键，按的顺序就是它们的顺序。<kbd>4</kbd> 在所有题型上都是下一题。
+一只手四个键，按的顺序就是它们的顺序。<kbd>4</kbd> 在所有题型上都是下一题；光标不在输入框里时，方向键 <kbd>→</kbd> 也是下一题（<kbd>←</kbd> 是上一题），按钮上显示的就是 →。
 
 口语题没有答题框，也没什么好提交的，节奏是 **听 → 说 → 看分 → 下一题**，所以 <kbd>2</kbd> 和 <kbd>3</kbd> 改成指录音条自己的控件。页面上一出现录音条就自动切换，不用手动开关。
 
 原来的动作一个都没丢：工具栏动作的字母别名在所有题型上都保持原义（<kbd>Alt</kbd>+<kbd>S</kbd> 提交、<kbd>Alt</kbd>+<kbd>R</kbd> 重置本题），录音条的每个控件也各有自己的直达键：<kbd>6</kbd> 录音、<kbd>7</kbd> 跳过准备（RA）、<kbd>8</kbd> AI 评分。
 
-**上一题不占数字键**。这是一晚上按不了几次的键，为它留一个数字就把每题都要按的下一题挤到了 <kbd>5</kbd>。它保留 <kbd>Alt</kbd>+<kbd>B</kbd> 和 <kbd>Alt</kbd>+<kbd>←</kbd>。
+**上一题不占数字键**。这是一晚上按不了几次的键，为它留一个数字就把每题都要按的下一题挤到了 <kbd>5</kbd>。它用 <kbd>←</kbd>，也保留 <kbd>Alt</kbd>+<kbd>B</kbd> 和 <kbd>Alt</kbd>+<kbd>←</kbd>。
 
 脚本按按钮本身识别，而不是按页面，所以其他复用同一排工具栏的题型一般也能直接用。当前页面上没有的按钮，对应的键按了不会有任何反应。
 
@@ -366,7 +396,7 @@ If you want another long-form writing type out too — Summarize Written Text ha
 | <kbd>1</kbd> | 播放 / 停止 | 同左 |
 | <kbd>2</kbd> | 提交 | **停止录音** |
 | <kbd>3</kbd> | 重置本题 | **AI 评分** |
-| <kbd>4</kbd> | 下一题 | 同左 |
+| <kbd>4</kbd> / <kbd>→</kbd> | 下一题（<kbd>→</kbd> 仅在光标不在输入框时，输入框里它照常移动光标） | 同左 |
 | <kbd>5</kbd> | — | **重录** |
 | <kbd>6</kbd> | 录音 / 停止录音（RA、RS） | |
 | <kbd>7</kbd> | 跳过准备（RA） | |
@@ -420,6 +450,8 @@ If you want another long-form writing type out too — Summarize Written Text ha
 
 实在不行：<kbd>Alt</kbd>+<kbd>0</kbd> 是总开关，一键关掉/打开所有快捷键。关掉时面板依然能打开，不会把自己锁死。
 
+> **升级到 1.11.0 会把自定义改键重置一次**：下一题 / 上一题的首键改成了 <kbd>→</kbd> / <kbd>←</kbd>（也就是按钮上显示的那个键）。选项和教过的按钮不受影响。
+>
 > **从 1.4.x 及更早版本升级会把自定义改键重置一次。** 1.5.0 重排了数字键（下一题挪到 <kbd>4</kbd>），把旧的存档合并进来会让半排键还指着原来的动作，不如清一次干净。面板里的选项和你用 <kbd>Alt</kbd>+<kbd>K</kbd> 教过的按钮不受影响。
 
 ### 其他控制键
@@ -470,7 +502,7 @@ Reading & Writing: Fill in the Blanks 判完分就丢了。网站不会告诉你
 
 **数据不出浏览器。** 存在 `localStorage` 的 `ynwac-shortcuts:fibrw-mistakes` 里，不点导出就不会发往任何地方；清网站数据会一并清掉。
 
-只对 `/fibrw` 生效。`/fibr`（Reading FIB，整篇共用一个拖拽词库的那个）是另一个题型，不碰。
+只对 `/fibrw` 生效。`/fibr`（Reading FIB，整篇共用一个拖拽词库的那个）是另一个题型，单独记，见下面。
 
 ### WFD：总写错的那几个词
 
@@ -483,6 +515,16 @@ WFD 没有题目标题，所以记录用**正确答案整句**（原样）做键
 面板里的 **导出 WFD 错题** 会下载 `wfd-mistakes.json`，格式见上面英文部分。只导出 `wrongCount > 0` 的句子；`lastAnswer` 和 `lastAttemptAt` 指最后一次做错的那次；`history` 每句最多保留 50 条。
 
 数据存在 `localStorage` 的 `ynwac-shortcuts:wfd-mistakes` 里，只在 `/wfd` 上读取。
+
+### RO、Reading FIB、Listening FIB：同样记
+
+这三个题型也会记，同样只读提交后的页面。面板里各有一个导出按钮，和 FIB-RW、WFD 放在一起。记录按题目标题记，附带题号。
+
+**Reading FIB（`/fibr`）和 Listening FIB（`/fibl`）** 按空记，记录和导出格式跟 FIB-RW 完全一样（`fibr-mistakes.json` / `fibl-mistakes.json`）。提交后两个页面都会在每个空后面放一个绿勾或红叉，括号里是正确答案，脚本就读这个。`lastChosen` 是你拖进去（Reading）或打进去（Listening）的词，空着没填就是 `""`。Listening FIB 网站判分不分大小写、忽略多余空格（`Sugar ` 算对），以网站为准。
+
+**Reorder Paragraphs（`/ro`）** 按题记。每段前面的编号（`2.`）跟着段落走，拖到哪都不变，所以顺序就记成编号列表。提交后排对位置的段变绿，排错的变红并写着“正确位置: N”，脚本由此拼出完整的正确顺序。导出 `ro-mistakes.json`，格式见上面英文部分：`correctOrder` 正确顺序、`lastOrder` 最后一次排错的顺序、`paragraphs` 按正确顺序的段落原文；`history` 每次一条，`inPlace` 是网站的算法（几段在对的位置），`pairsRight` 是 PTE 的算法（相邻两段排对了几对）。
+
+数据存在 `ynwac-shortcuts:fibr-mistakes`、`…:fibl-mistakes`、`…:ro-mistakes` 里，不点导出不会离开浏览器。
 
 ### 哪些页面不生效
 
@@ -523,7 +565,7 @@ There is no build step, no bundle, no server. **The file on `main` is the live v
    npm install --package-lock-only
    ```
 4. **If you moved a default key, bump `LAYOUT`.** Saved bindings are merged over the defaults, so without it anyone who has ever rebound a key keeps their old number row and ends up with a layout that is half new, half stale.
-5. All seven fixtures must be green:
+5. Every test file must be green:
    ```bash
    npm test
    ```

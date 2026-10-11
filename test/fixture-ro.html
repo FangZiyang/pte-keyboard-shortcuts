@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Reorder Paragraphs fixture</title>
+<!--
+  /ro, in the state the site leaves it in AFTER 提交, taken off the live
+  page: you put the paragraphs labelled 2 1 4 3 in that order, the right
+  order is 2 1 3 4.
+
+  A paragraph in the right slot goes bg-green-50; one in the wrong slot
+  goes bg-red-50 and gains a div.mt-2 saying which slot it belongs in.
+  Each word is its own span, punctuation and spaces included.
+
+  The mobile layout keeps a second copy of the list outside the question
+  box, so it is here too.
+-->
+<div class="is-hidden ro-mobile-shell">
+  <div role="button" aria-disabled="true" class="paragraph-item mb-4 p-4 rounded-lg flex items-start bg-red-50">
+    <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">9.</span><span>Ghost</span></div>
+  </div>
+  <div role="button" aria-disabled="true" class="paragraph-item mb-4 p-4 rounded-lg flex items-start bg-red-50">
+    <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">8.</span><span>Ghost</span></div>
+  </div>
+</div>
+
+<div class="pte-question-box">
+  <div class="pte-question-header">
+    <span class="inline-flex">Question #<!-- -->1</span>
+    <span class="truncate whitespace-nowrap text-[19px] font-medium">Brazilian Folk Music Research</span>
+  </div>
+
+  <div class="text-gray-900 text-xl leading-relaxed mb-4">
+    <div role="button" tabindex="0" aria-disabled="true" aria-roledescription="sortable" class="paragraph-item mb-4 p-4 rounded-lg flex items-start transition-all bg-green-50">
+      <div class="flex-shrink-0 mr-3 drag-handle pt-1"><svg class="text-gray-400 invisible"></svg><svg class="text-green-500"></svg></div>
+      <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">2.</span><span class="cursor-pointer">Early</span><span> </span><span class="cursor-pointer">in</span><span> </span><span class="cursor-pointer">1938</span><span>,</span><span> </span><span class="cursor-pointer">a</span><span> </span><span class="cursor-pointer">mission</span><span>.</span></div>
+    </div>
+    <div role="button" tabindex="0" aria-disabled="true" aria-roledescription="sortable" class="paragraph-item mb-4 p-4 rounded-lg flex items-start transition-all bg-green-50">
+      <div class="flex-shrink-0 mr-3 drag-handle pt-1"><svg class="text-gray-400 invisible"></svg><svg class="text-green-500"></svg></div>
+      <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">1.</span><span class="cursor-pointer">The</span><span> </span><span class="cursor-pointer">intention</span><span> </span><span class="cursor-pointer">was</span><span> </span><span class="cursor-pointer">to</span><span> </span><span class="cursor-pointer">record</span><span>.</span></div>
+    </div>
+    <div role="button" tabindex="0" aria-disabled="true" aria-roledescription="sortable" class="paragraph-item mb-4 p-4 rounded-lg flex items-start transition-all bg-red-50">
+      <div class="flex-shrink-0 mr-3 drag-handle pt-1"><svg class="text-gray-400 invisible"></svg><svg class="text-red-500"></svg></div>
+      <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">4.</span><span class="cursor-pointer">But</span><span> </span><span class="cursor-pointer">it</span><span> </span><span class="cursor-pointer">languished</span><span>.</span><div class="mt-2 text-sm text-gray-600"><span class="font-medium">正确位置:</span> 4</div></div>
+    </div>
+    <div role="button" tabindex="0" aria-disabled="true" aria-roledescription="sortable" class="paragraph-item mb-4 p-4 rounded-lg flex items-start transition-all bg-red-50">
+      <div class="flex-shrink-0 mr-3 drag-handle pt-1"><svg class="text-gray-400 invisible"></svg><svg class="text-red-500"></svg></div>
+      <div class="flex-grow paragraph-content"><span class="font-semibold mr-2">3.</span><span class="cursor-pointer">They</span><span> </span><span class="cursor-pointer">recorded</span><span> </span><span class="cursor-pointer">whoever</span><span>.</span><div class="mt-2 text-sm text-gray-600"><span class="font-medium">正确位置:</span> 3</div></div>
+    </div>
+  </div>
+
+  <div class="pte-content-area">
+    <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary" disabled>已提交</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over — that text is what the other repo has to parse.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>

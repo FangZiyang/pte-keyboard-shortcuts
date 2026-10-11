@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Reading FIB fixture</title>
+<!--
+  /fibr AFTER 提交, taken off the live page. Each gap is a
+  .relative.inline-block holding the word you dragged in (span.truncate,
+  or a grey 点击填入 when left empty), followed by a span.ml-1: a green or
+  red icon and the right answer in brackets — on right gaps too.
+
+  The filled words are span.truncate like the header title, which is why
+  the title is read from .pte-question-header. The mobile copy of the
+  gaps lives outside the question box.
+-->
+<div class="is-hidden fibr-mobile-shell">
+  <div class="relative inline-block my-0 mx-1"><div class="border border-blue-500 bg-blue-50 rounded px-2 py-1 w-[120px] h-[32px] inline-flex items-center justify-center"><div class="flex items-center justify-center w-full h-full"><span class="text-center text-base truncate">ghost</span></div></div><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(ghost)</span></span></div>
+</div>
+
+<div class="pte-question-box">
+  <div class="pte-question-header">
+    <span class="inline-flex">Question #<!-- -->1</span>
+    <span class="truncate whitespace-nowrap text-[19px] font-medium">Program</span>
+  </div>
+  <div class="mb-4">
+    Our program will develop your <div class="relative inline-block my-0 mx-1"><div class="border border-blue-500 bg-blue-50 rounded px-2 py-1 w-[120px] h-[32px] inline-flex items-center justify-center"><div class="flex items-center justify-center w-full h-full"><span class="text-center text-base truncate">theoretical</span></div></div><span class="ml-1"><svg class="text-green-500 inline text-base"></svg><span class="text-green-500 ml-1 font-bold text-base">(theoretical)</span></span></div> knowledge and your problem-solving and
+    <div class="relative inline-block my-0 mx-1"><div class="border border-blue-500 bg-blue-50 rounded px-2 py-1 w-[120px] h-[32px] inline-flex items-center justify-center"><div class="flex items-center justify-center w-full h-full"><span class="text-center text-base truncate">uprising</span></div></div><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(analytical)</span></span></div> skills, to achieve the <div class="relative inline-block my-0 mx-1"><div class="border border-blue-500 bg-blue-50 rounded px-2 py-1 w-[120px] h-[32px] inline-flex items-center justify-center"><div class="flex items-center justify-center w-full h-full"><span class="text-center text-base truncate">ultimate</span></div></div><span class="ml-1"><svg class="text-green-500 inline text-base"></svg><span class="text-green-500 ml-1 font-bold text-base">(ultimate)</span></span></div> qualification. The structure is extremely
+    <div class="relative inline-block my-0 mx-1"><div class="border border-gray-300 bg-white rounded px-2 py-1 w-[120px] h-[32px] inline-flex items-center justify-center"><div class="inline-flex items-center justify-center text-gray-400 text-base">点击填入</div></div><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(flexible)</span></span></div>, enabling you to personalize your MSc.
+  </div>
+  <div class="flex flex-wrap gap-2 mb-3">
+    <div class="px-3 py-2 rounded-lg text-base bg-gray-100">flexible</div>
+    <div class="px-3 py-2 rounded-lg text-base bg-gray-100">analytical</div>
+  </div>
+
+  <div class="pte-content-area">
+    <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary" disabled>已提交</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over — that text is what the other repo has to parse.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>

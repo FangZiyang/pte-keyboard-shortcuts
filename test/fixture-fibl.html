@@ -1,0 +1,58 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Listening FIB fixture</title>
+<!--
+  /fibl AFTER 提交, taken off the live page. Each gap is an
+  <input type="text"> in a span.relative.inline-block; on 提交 it goes
+  disabled and green or red, and a span.ml-1 behind it carries the icon
+  and the right answer in brackets.
+
+  The site ignores case and stray spaces: "Sugar " is marked right for
+  sugar, and the log believes the colour rather than re-judging it.
+-->
+<div class="is-hidden fibl-mobile-shell">
+  <span class="relative inline-block my-0 mx-1"><input type="text" disabled class="border rounded px-2 py-1 w-[120px] h-[32px] text-center text-base border-red-500 bg-red-50 text-red-600" value="ghost"><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(ghost)</span></span></span>
+</div>
+
+<div class="pte-question-box">
+  <div class="pte-question-header">
+    <span class="inline-flex">Question #<!-- -->44</span>
+    <span class="truncate whitespace-nowrap text-[19px] font-medium">A Day in the Life of a Baker</span>
+  </div>
+  <div class="pte-audio"><button class="w-10 h-10 rounded-full"></button></div>
+  <div class="mb-4">
+    The baker starts her day with a <span class="relative inline-block my-0 mx-1"><input type="text" disabled class="border rounded px-2 py-1 w-[120px] h-[32px] text-center text-base border-green-500 bg-green-50 text-green-600" value="simple"><span class="ml-1"><svg class="text-green-500 inline text-base"></svg><span class="text-green-500 ml-1 font-bold text-base">(simple)</span></span></span> routine. She measures out the <span class="relative inline-block my-0 mx-1"><input type="text" disabled class="border rounded px-2 py-1 w-[120px] h-[32px] text-center text-base border-green-500 bg-green-50 text-green-600" value="Sugar "><span class="ml-1"><svg class="text-green-500 inline text-base"></svg><span class="text-green-500 ml-1 font-bold text-base">(sugar)</span></span></span>
+    needed. During the morning <span class="relative inline-block my-0 mx-1"><input type="text" disabled class="border rounded px-2 py-1 w-[120px] h-[32px] text-center text-base border-red-500 bg-red-50 text-red-600" value="Morning"><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(rush)</span></span></span>, she bakes. Her <span class="relative inline-block my-0 mx-1"><input type="text" disabled class="border rounded px-2 py-1 w-[120px] h-[32px] text-center text-base border-red-500 bg-red-50 text-red-600" value=""><span class="ml-1"><svg class="text-red-500 inline text-base"></svg><span class="text-red-500 ml-1 font-bold text-base">(steady)</span></span></span> pace keeps up.
+  </div>
+
+  <div class="pte-content-area">
+    <button id="b-submit" class="pte-toolbar-btn pte-toolbar-btn--primary" disabled>已提交</button>
+    <button id="b-reset" class="pte-toolbar-btn pte-toolbar-btn--warning">⟳ 重置</button>
+    <button id="b-next" class="pte-toolbar-btn pte-toolbar-btn--secondary">下一题 →</button>
+  </div>
+</div>
+
+<script>
+  window.__clicks = [];
+  document.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => window.__clicks.push(b.id));
+  });
+
+  // The download is a Blob, an object URL and an <a>.click(). jsdom has no
+  // real download, so stand in for all three and keep the bytes the script
+  // tried to hand over — that text is what the other repo has to parse.
+  window.__downloads = [];
+  const RealBlob = window.Blob;
+  window.Blob = function (parts, opts) {
+    window.__lastBlobText = (parts || []).join('');
+    return new RealBlob(parts, opts);
+  };
+  window.URL.createObjectURL = () => 'blob:stub';
+  window.URL.revokeObjectURL = () => {};
+  const createElement = document.createElement.bind(document);
+  document.createElement = (tag) => {
+    const el = createElement(tag);
+    if (tag === 'a') el.click = () => window.__downloads.push({ name: el.download, href: el.href });
+    return el;
+  };
+</script>

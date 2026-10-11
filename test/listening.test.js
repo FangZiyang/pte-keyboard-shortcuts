@@ -100,7 +100,7 @@ setTimeout(() => {
   window.dispatchEvent(new window.Event('resize'));
   setTimeout(() => {
     check('播放 gets a chip of its own', chips().includes('1'), chips().join(' '));
-    check('chips cover the whole loop', ['1', '2', '3', '4'].every((k) => chips().includes(k)), chips().join(' '));
+    check('chips cover the whole loop', ['1', '2', '3', '→'].every((k) => chips().includes(k)), chips().join(' '));
 
     console.log(`\n${pass} passed, ${fail} failed`);
     process.exit(fail ? 1 : 0);

@@ -2,9 +2,9 @@
 // @name         PTE Keyboard Shortcuts — YNWAC
 // @name:zh-CN   PTE 键盘快捷键 — YNWAC
 // @namespace    https://github.com/FangZiyang/pte-keyboard-shortcuts
-// @version      1.10.0
-// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs which FIB-RW blanks and WFD words you keep missing, and exports them. Rebindable keys, on-button hints.
-// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 FIB-RW 总错的空和 WFD 总写错的词，并可导出。快捷键可自定义，按钮上直接显示提示。
+// @version      1.11.0
+// @description  Play / Submit / Reset / Next on ynwac.com PTE practice pages without touching the mouse — plus record, AI score and re-record on speaking questions. Logs what you keep missing on RO, Reading FIB, FIB-RW, WFD and Listening FIB, and exports it. Rebindable keys, on-button hints.
+// @description:zh-CN  在 ynwac.com PTE 练习页面用键盘完成 播放 / 提交 / 重置 / 下一题，口语题还支持 录音 / AI 评分 / 重录。自动记录 RO、Reading FIB、FIB-RW、WFD、Listening FIB 的错题，并可导出。快捷键可自定义，按钮上直接显示提示。
 // @author       FangZiyang
 // @match        https://ynwac.com/*
 // @match        https://www.ynwac.com/*
@@ -73,7 +73,7 @@
    *
    * 上一题 gets no number. It is a once-an-evening key, and spending a
    * digit on it pushed 下一题 — pressed on every single question — out to
-   * 5. It keeps Alt+B and Alt+← .
+   * 5. It keeps Alt+B and Alt+← , and bare ← like 下一题 has bare →.
    *
    * The number belongs to the action, not to the button's position, so
    * nothing shifts under your fingers when 提交 disappears on a question
@@ -106,16 +106,21 @@
   //
   // Enter is the odd one out: it only counts on Write From Dictation, and
   // there it works inside the answer box as well. See bareKeyLive.
+  //
+  // → and ← lead for 下一题 / 上一题: paging through questions is what the
+  // arrow keys already mean to your hand. They are the keys drawn on the
+  // two buttons whenever they work; inside a text field they belong to the
+  // cursor, so there the chip falls back to 4 (or Alt+B).
   const DEFAULT_QUICK = {
     play: ['1', 'p'],
     submit: ['2', 's', 'enter'],
     reset: ['3', 'r'],
-    next: ['4', 'n', 'arrowright'],
+    next: ['arrowright', '4', 'n'],
     rerecord: ['5'],
     record: ['6'],
     skipPrep: ['7'],
     aiScore: ['8'],
-    prev: ['b', 'arrowleft'],
+    prev: ['arrowleft', 'b'],
     focusAnswer: ['i'],
     focusJump: ['j'],
   };
@@ -126,7 +131,7 @@
    * the number row pointing at the previous meaning, which is worse than
    * losing a rebind.
    */
-  const LAYOUT = 2;
+  const LAYOUT = 3;
   if (load('layout', 1) !== LAYOUT) {
     save('bindings', {});
     save('quick', {});
@@ -570,30 +575,138 @@
     }
   }
 
-  // The graded screen already written down. A MutationObserver fires many
-  // times for one submit, and 重置 → answer again → 提交 has to count as a
-  // second attempt even when you picked exactly the same words.
-  let lastGraded = null;
-
-  function recordFibrw() {
-    if (!FIBRW_PATH.test(location.pathname)) return (lastGraded = null), undefined;
-
-    const box = Array.from(document.querySelectorAll('.pte-question-box')).filter(isVisible)[0];
+  function readFibrw() {
+    const box = questionBox();
     const titleEl = box && Array.from(box.querySelectorAll('span.truncate')).filter(isVisible)[0];
     const title = titleEl ? rawText(titleEl) : '';
     const qnum = box ? Number((rawText(box).match(/Question #(\d+)/) || [])[1]) || null : null;
-    const blanks = box ? fibrwBlanks(box) : [];
 
     // Worth learning even on a question you are only passing through.
     noteQuestionNumber(title, qnum);
 
-    if (!title || !blanks.length || !blanks.every((b) => b.graded)) return (lastGraded = null), undefined;
+    return { title, qnum, blanks: box ? fibrwBlanks(box) : [] };
+  }
+
+  const questionBox = () => Array.from(document.querySelectorAll('.pte-question-box')).filter(isVisible)[0] || null;
+
+  // The header title, falling back to the first title-looking span. On
+  // Reading FIB a filled blank is a span.truncate too, so the header is
+  // asked first.
+  function questionTitle(box) {
+    const el =
+      Array.from(box.querySelectorAll('.pte-question-header span.truncate')).filter(isVisible)[0] ||
+      Array.from(box.querySelectorAll('span.truncate')).filter(isVisible)[0];
+    return el ? rawText(el) : '';
+  }
+  // "Question #12" — the number is its own text node, so allow a gap.
+  const questionNumber = (box) => Number((rawText(box).match(/Question #\s*(\d+)/) || [])[1]) || null;
+
+  /* ------------------------------------------------------------------ *
+   * Reading FIB (/fibr) and Listening FIB (/fibl) — same log, other DOM
+   *
+   * Both put each gap in a .relative.inline-block wrapper, and after 提交
+   * both add a <span class="ml-1"> right behind it: a green or red icon,
+   * then the right answer in brackets, "(analytical)" — on right blanks
+   * as well as wrong ones. What differs is what you answered with:
+   *
+   *   /fibr  a word dragged in from the bank — span.truncate inside a
+   *          div.w-[120px]; an empty gap shows a grey 点击填入 instead
+   *   /fibl  an <input type="text">, which goes disabled and red or green
+   *
+   * The site grades /fibl ignoring case and stray spaces ("Sugar " is
+   * right for sugar), so its colour is believed, never re-judged here.
+   *
+   * Each page carries a hidden mobile copy of every gap outside the
+   * question box — hence scoping to the visible box.
+   * ------------------------------------------------------------------ */
+  function markedBlanks(box, chosenOf) {
+    return Array.from(box.querySelectorAll('.relative.inline-block'))
+      .filter(isVisible)
+      .filter((w) => w.querySelector('input[type="text"], [class*="w-[120px]"]'))
+      .map((w, i) => {
+        const mark = Array.from(w.children).find((c) => c.matches('span.ml-1'));
+        const icon = mark && mark.querySelector('svg');
+        const cls = (icon && icon.getAttribute('class')) || '';
+        const wrong = /text-red-/.test(cls);
+        return {
+          blankIndex: i + 1,
+          chosen: chosenOf(w),
+          graded: wrong || /text-green-/.test(cls),
+          wrong,
+          correctAnswer: mark ? rawText(mark).replace(/^\(\s*|\s*\)$/g, '') : '',
+        };
+      });
+  }
+
+  function readMarked(chosenOf) {
+    const box = questionBox();
+    if (!box) return { title: '', qnum: null, blanks: [] };
+    return { title: questionTitle(box), qnum: questionNumber(box), blanks: markedBlanks(box, chosenOf) };
+  }
+
+  const readFibr = () =>
+    readMarked((w) => {
+      const word = w.querySelector('span.truncate');
+      return word ? rawText(word) : '';
+    });
+  const readFibl = () =>
+    readMarked((w) => {
+      const input = w.querySelector('input[type="text"]');
+      return input ? input.value.trim() : '';
+    });
+
+  /*
+   * One spec per blank-by-blank question type. The record shape is the
+   * same for all three, so is the export — only where the file lives and
+   * what it is called differ. FIB-RW keeps the store key and schema it has
+   * always had, so nothing already logged moves.
+   */
+  const BLANK_LOGS = {
+    fibrw: {
+      path: FIBRW_PATH,
+      store: MISTAKES_KEY,
+      read: readFibrw,
+      name: 'FIB-RW',
+      schema: 'fibrw-mistakes/2',
+      file: 'fibrw-mistakes.json',
+      qnumIndex: true,
+      last: null,
+    },
+    fibr: {
+      path: /(^|\/)fibr\/?$/, // NOT /fibrw
+      store: 'fibr-mistakes',
+      read: readFibr,
+      name: 'Reading FIB',
+      schema: 'fibr-mistakes/1',
+      file: 'fibr-mistakes.json',
+      last: null,
+    },
+    fibl: {
+      path: /(^|\/)fibl\/?$/,
+      store: 'fibl-mistakes',
+      read: readFibl,
+      name: 'Listening FIB',
+      schema: 'fibl-mistakes/1',
+      file: 'fibl-mistakes.json',
+      last: null,
+    },
+  };
+
+  // spec.last is the graded screen already written down. A MutationObserver
+  // fires many times for one submit, and 重置 → answer again → 提交 has to
+  // count as a second attempt even when you picked exactly the same words.
+  function recordBlanks(spec) {
+    if (!spec.path.test(location.pathname)) return (spec.last = null), undefined;
+
+    const { title, qnum, blanks } = spec.read();
+
+    if (!title || !blanks.length || !blanks.every((b) => b.graded)) return (spec.last = null), undefined;
 
     const sig = [title].concat(blanks.map((b) => `${b.blankIndex}:${b.chosen}`)).join(' ');
-    if (sig === lastGraded) return;
-    lastGraded = sig;
+    if (sig === spec.last) return;
+    spec.last = sig;
 
-    const log = load(MISTAKES_KEY, {});
+    const log = load(spec.store, {});
     const at = new Date().toISOString();
     let missed = 0;
 
@@ -624,18 +737,39 @@
       log[k] = rec;
     }
 
-    save(MISTAKES_KEY, log);
+    save(spec.store, log);
     if (missed) {
       const where = qnum ? `#${qnum} ` : '';
       toast(`✍️ ${where}记下 ${missed} 个错空 / ${missed} wrong blank${missed > 1 ? 's' : ''} logged`);
     }
   }
 
-  let fibrwTimer = null;
-  const scheduleFibrw = () => {
-    clearTimeout(fibrwTimer);
-    fibrwTimer = setTimeout(recordFibrw, 250);
+  // Each spec checks its own path first, so only the page you are on
+  // does any reading.
+  let blanksTimer = null;
+  const scheduleBlanks = () => {
+    clearTimeout(blanksTimer);
+    blanksTimer = setTimeout(() => Object.values(BLANK_LOGS).forEach(recordBlanks), 250);
   };
+
+  // Hands a JSON file to the browser's download bar. Every `at` in it is
+  // UTC; `timezone` is the zone they were collected in, so a sheet can
+  // print the local clock time you actually sat down at rather than
+  // something three hours off.
+  function download(file, schema, items) {
+    const payload = {
+      schema,
+      exportedAt: new Date().toISOString(),
+      timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
+      items,
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   // Fields spelled out in schema order rather than handed over as stored,
   // so the file reads the same whatever order localStorage grew them in.
@@ -656,9 +790,9 @@
     history: (r.history || []).map((h) => ({ at: h.at, chosen: h.chosen || '', ok: !!h.ok })),
   });
 
-  function exportFibrw() {
-    const log = load(MISTAKES_KEY, {});
-    const index = load(QNUM_KEY, {});
+  function exportBlanks(spec) {
+    const log = load(spec.store, {});
+    const index = spec.qnumIndex ? load(QNUM_KEY, {}) : {};
     const items = Object.keys(log)
       .map((k) => log[k])
       // Only blanks you have actually missed: the rest are in the log to
@@ -675,26 +809,183 @@
       );
 
     if (!items.length) {
-      toast('还没有记录到错题 / no mistakes logged yet', true);
+      toast(`还没有记录到 ${spec.name} 错题 / no ${spec.name} mistakes logged yet`, true);
       return 0;
     }
 
-    const payload = {
-      schema: 'fibrw-mistakes/2',
-      exportedAt: new Date().toISOString(),
-      // Every `at` in here is UTC. This is the zone they were collected
-      // in, so a sheet can print the local clock time you actually sat
-      // down at rather than something three hours off.
-      timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
-      items,
-    };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fibrw-mistakes.json';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    download(spec.file, spec.schema, items);
     toast(`已导出 ${items.length} 个错空 / exported ${items.length} blanks`);
+    return items.length;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Reorder Paragraphs (/ro) — which questions you keep getting wrong
+   *
+   * After 提交 every .paragraph-item turns bg-green-50 (in the right
+   * place) or bg-red-50, and a red one gains
+   *
+   *   <div class="mt-2 …"><span>正确位置:</span> 4</div>
+   *
+   * — the 1-based slot it belongs in. A green one belongs where it is, so
+   * between them the whole correct order can be read back off the page.
+   * The site scores by position (2 of 4 in place = 50%); PTE scores
+   * adjacent pairs, so both are kept.
+   *
+   * Each paragraph carries a label, "2.", that travels with it however
+   * you drag it — that is the identity of a paragraph here, and an order
+   * is written as a list of labels: [2, 1, 3, 4].
+   *
+   * Like the blanks logs, keyed by the question title; the question box
+   * has a hidden mobile twin, hence the visible-box scope.
+   * ------------------------------------------------------------------ */
+  const RO_MISTAKES_KEY = 'ro-mistakes';
+  const RO_PATH = /(^|\/)ro\/?$/;
+
+  function roResult() {
+    const box = questionBox();
+    if (!box) return null;
+    const items = Array.from(box.querySelectorAll('.paragraph-item')).filter(isVisible);
+    if (items.length < 2) return null;
+
+    const paras = items.map((it, i) => {
+      const cls = it.getAttribute('class') || '';
+      const content = it.querySelector('.paragraph-content') || it;
+      const labelEl = content.querySelector('span.font-semibold');
+      const posEl = Array.from(content.children).find((c) => c.matches('div.mt-2'));
+      const clone = content.cloneNode(true);
+      Array.from(clone.querySelectorAll('span.font-semibold, div.mt-2')).forEach((el) => el.remove());
+      const right = /bg-green-/.test(cls);
+      return {
+        label: Number(((labelEl && rawText(labelEl)) || '').replace(/\D/g, '')) || i + 1,
+        text: (clone.textContent || '').replace(/\s+/g, ' ').trim(),
+        graded: right || /bg-red-/.test(cls),
+        right,
+        correctPos: right ? i + 1 : Number((((posEl && rawText(posEl)) || '').match(/(\d+)\s*$/) || [])[1]) || null,
+      };
+    });
+    if (!paras.every((p) => p.graded)) return null;
+
+    // Slot every paragraph into where it belongs. If the page ever says
+    // two paragraphs belong in the same slot, the correct order is not
+    // knowable, and is left out rather than guessed.
+    const slots = new Array(paras.length).fill(null);
+    for (const p of paras) {
+      if (p.correctPos && p.correctPos <= slots.length && slots[p.correctPos - 1] === null) slots[p.correctPos - 1] = p;
+    }
+    const correct = slots.every(Boolean) ? slots : null;
+
+    const order = paras.map((p) => p.label);
+    const correctOrder = correct ? correct.map((p) => p.label) : [];
+    const pairs = new Set(correctOrder.slice(1).map((l, i) => `${correctOrder[i]}>${l}`));
+    const pairsRight = order.slice(1).filter((l, i) => pairs.has(`${order[i]}>${l}`)).length;
+
+    return {
+      title: questionTitle(box),
+      qnum: questionNumber(box),
+      order,
+      correctOrder,
+      // In the right order when it is known, else as you left them.
+      paragraphs: (correct || paras).map((p) => ({ label: p.label, text: p.text })),
+      inPlace: paras.filter((p) => p.right).length,
+      total: paras.length,
+      pairsRight: correct ? pairsRight : null,
+      pairsTotal: paras.length - 1,
+      misplaced: paras.filter((p) => !p.right).map((p) => p.label),
+    };
+  }
+
+  let lastRo = null;
+
+  function recordRo() {
+    if (!RO_PATH.test(location.pathname)) return (lastRo = null), undefined;
+    const res = roResult();
+    if (!res || !res.title) return (lastRo = null), undefined;
+
+    const sig = `${res.title}\n${res.order.join(',')}`;
+    if (sig === lastRo) return;
+    lastRo = sig;
+
+    const log = load(RO_MISTAKES_KEY, {});
+    const at = new Date().toISOString();
+    const rec = log[res.title] || { title: res.title, attempts: 0, wrongCount: 0, history: [] };
+    if (res.qnum) rec.questionNumber = res.qnum;
+    if (res.correctOrder.length) {
+      rec.correctOrder = res.correctOrder;
+      rec.paragraphs = res.paragraphs;
+    } else if (!rec.paragraphs) {
+      rec.paragraphs = res.paragraphs;
+    }
+
+    const ok = res.inPlace === res.total;
+    rec.attempts += 1;
+    rec.history.push({
+      at,
+      order: res.order,
+      inPlace: res.inPlace,
+      total: res.total,
+      pairsRight: res.pairsRight,
+      pairsTotal: res.pairsTotal,
+      misplaced: res.misplaced,
+      ok,
+    });
+    if (rec.history.length > HISTORY_CAP) rec.history = rec.history.slice(-HISTORY_CAP);
+
+    // As on the blanks: the last order you got WRONG, never the right one
+    // you finally settled on.
+    if (!ok) {
+      rec.wrongCount += 1;
+      rec.lastOrder = res.order;
+      rec.lastAttemptAt = at;
+    }
+    log[res.title] = rec;
+    save(RO_MISTAKES_KEY, log);
+
+    if (!ok) {
+      const where = res.qnum ? `#${res.qnum} ` : '';
+      const pairs = res.pairsRight === null ? '' : ` · 相邻对 ${res.pairsRight}/${res.pairsTotal}`;
+      toast(`✍️ ${where}记下 RO：位置对 ${res.inPlace}/${res.total}${pairs} / RO logged`);
+    }
+  }
+
+  let roTimer = null;
+  const scheduleRo = () => {
+    clearTimeout(roTimer);
+    roTimer = setTimeout(recordRo, 250);
+  };
+
+  function exportRo() {
+    const log = load(RO_MISTAKES_KEY, {});
+    const items = Object.keys(log)
+      .map((k) => log[k])
+      .filter((r) => r && r.wrongCount > 0)
+      .map((r) => ({
+        title: r.title,
+        questionNumber: r.questionNumber || null,
+        attempts: r.attempts,
+        wrongCount: r.wrongCount,
+        correctOrder: r.correctOrder || [],
+        paragraphs: r.paragraphs || [],
+        lastOrder: r.lastOrder || [],
+        lastAttemptAt: r.lastAttemptAt || '',
+        history: (r.history || []).map((h) => ({
+          at: h.at,
+          order: h.order || [],
+          inPlace: h.inPlace,
+          total: h.total,
+          pairsRight: h.pairsRight,
+          pairsTotal: h.pairsTotal,
+          misplaced: h.misplaced || [],
+          ok: !!h.ok,
+        })),
+      }))
+      .sort((a, b) => (a.questionNumber || Infinity) - (b.questionNumber || Infinity) || a.title.localeCompare(b.title));
+
+    if (!items.length) {
+      toast('还没有记录到 RO 错题 / no RO mistakes logged yet', true);
+      return 0;
+    }
+    download('ro-mistakes.json', 'ro-mistakes/1', items);
+    toast(`已导出 ${items.length} 道 RO / exported ${items.length} RO questions`);
     return items.length;
   }
 
@@ -760,7 +1051,7 @@
     };
   }
 
-  // As with lastGraded: one submit is many mutations, but 重置 → 提交 is
+  // As with spec.last: one submit is many mutations, but 重置 → 提交 is
   // a new attempt even with the same words, and 重置 takes the result off
   // the page in between — which is what clears this.
   let lastWfd = null;
@@ -855,18 +1146,7 @@
       return 0;
     }
 
-    const payload = {
-      schema: 'wfd-mistakes/1',
-      exportedAt: new Date().toISOString(),
-      timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || '',
-      items,
-    };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'wfd-mistakes.json';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    download('wfd-mistakes.json', 'wfd-mistakes/1', items);
     toast(`已导出 ${items.length} 句 / exported ${items.length} sentences`);
     return items.length;
   }
@@ -1092,13 +1372,20 @@
       if (CONFIG.quickKeys && quick && bareKeyLive(quick)) return quick;
       return (bindings[id] || [])[i] || null;
     };
-    if (!speakingMode()) return at(actionId, 0);
+    // The first single key that works from here — → idle, 4 in the
+    // answer box. Only for actions nothing borrows from: a lent slot's
+    // alternates do not follow it, so for those the index has to hold.
+    const firstLive = (id) => {
+      const quick = CONFIG.quickKeys && (quickKeys[id] || []).find(bareKeyLive);
+      return quick || (bindings[id] || [])[0] || null;
+    };
+    if (!speakingMode()) return SPEAKING_SLOTS[actionId] ? at(actionId, 0) : firstLive(actionId);
 
     const lender = Object.keys(SPEAKING_SLOTS).find((k) => SPEAKING_SLOTS[k] === actionId);
     if (lender) return at(lender, 0);
     if (actionId === 'submit') return null;
     if (SPEAKING_SLOTS[actionId]) return at(actionId, 1);
-    return at(actionId, 0);
+    return firstLive(actionId);
   }
 
   function refreshHints() {
@@ -1188,6 +1475,16 @@
     return `<div class="ynwac-sc-speak"><b>口语题 RA / RS</b> — 数字键在这里是<br>${cells}</div>`;
   }
 
+  // One button per mistake log, in the order the question types sit on
+  // the site's menu.
+  const EXPORTS = [
+    ['ro', 'RO'],
+    ['fibr', 'Reading FIB'],
+    ['fibrw', 'FIB-RW'],
+    ['wfd', 'WFD'],
+    ['fibl', 'Listening FIB'],
+  ];
+
   function panelHTML() {
     return `
       <div class="ynwac-sc-card" role="dialog" aria-label="Keyboard shortcuts">
@@ -1215,9 +1512,11 @@
         <label class="ynwac-sc-opt"><input type="checkbox" data-opt="showToast"> 显示操作提示 / show toast</label>
         <div class="ynwac-sc-foot">
           <button type="button" class="ynwac-sc-reset">恢复默认 Reset to defaults</button>
-          <button type="button" class="ynwac-sc-export ynwac-sc-export-fibrw" title="FIB-RW 的错空只记在本机，导出前不会离开浏览器 · FIB-RW misses are logged in this browser and go nowhere until you export">导出 FIB-RW 错题 / Export FIB-RW</button>
-          <button type="button" class="ynwac-sc-export ynwac-sc-export-wfd" title="WFD 的错词只记在本机，导出前不会离开浏览器 · WFD misses are logged in this browser and go nowhere until you export">导出 WFD 错题 / Export WFD</button>
           <span class="ynwac-sc-note">和翻译插件冲突？点“改键”换一个 · Clashes with a translator extension? Hit Rebind.</span>
+        </div>
+        <div class="ynwac-sc-foot" title="错题只记在本机，导出前不会离开浏览器 · Mistakes are logged in this browser and go nowhere until you export">
+          <span class="ynwac-sc-note">导出错题 / Export mistakes:</span>
+          ${EXPORTS.map(([kind, label]) => `<button type="button" class="ynwac-sc-export ynwac-sc-export-${kind}" data-export="${kind}">${label}</button>`).join('')}
         </div>
       </div>`;
   }
@@ -1241,8 +1540,10 @@
       refreshHints();
       toast('已恢复默认快捷键 / defaults restored');
     });
-    panelEl.querySelector('.ynwac-sc-export-fibrw').addEventListener('click', exportFibrw);
-    panelEl.querySelector('.ynwac-sc-export-wfd').addEventListener('click', exportWfd);
+    panelEl.querySelectorAll('[data-export]').forEach((btn) => {
+      const kind = btn.dataset.export;
+      btn.addEventListener('click', () => (kind === 'ro' ? exportRo() : kind === 'wfd' ? exportWfd() : exportBlanks(BLANK_LOGS[kind])));
+    });
     panelEl.querySelectorAll('.ynwac-sc-rebind').forEach((btn) => {
       btn.addEventListener('click', () => startCapture(btn.dataset.act, btn));
     });
@@ -1447,14 +1748,16 @@
   const mo = new MutationObserver((records) => {
     if (records.every(fromUs)) return;
     scheduleHints();
-    scheduleFibrw();
+    scheduleBlanks();
+    scheduleRo();
     scheduleWfd();
   });
   if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   refreshHints();
   migrateFibrw();
   // A question graded before the script woke up still counts.
-  scheduleFibrw();
+  scheduleBlanks();
+  scheduleRo();
   scheduleWfd();
 
   // Not on an off page: the greeting would be announcing keys that do

@@ -120,6 +120,10 @@ reset();
 const typed = key({ key: 'n', code: 'KeyN' });
 check('plain "n" while typing is NOT intercepted', clicks().length === 0 && !typed.defaultPrevented);
 
+reset();
+const caret = key({ key: 'ArrowRight', code: 'ArrowRight' });
+check('→ in the answer box moves the caret, not the question', clicks().length === 0 && !caret.defaultPrevented);
+
 /* ---- 4. Esc, then single keys ---- */
 key({ key: 'Escape', code: 'Escape' });
 check('Esc blurs the textarea', document.activeElement !== answer);
@@ -131,6 +135,14 @@ check('quick key "p" -> 播放', last() === 'b-play', `got ${last()}`);
 reset();
 key({ key: 'r', code: 'KeyR' });
 check('quick key "r" -> 重置 (not 重置进度)', last() === 'b-reset' && !clicks().includes('b-resetall'), `got ${last()}`);
+
+reset();
+key({ key: 'ArrowRight', code: 'ArrowRight' });
+check('bare → -> 下一题', last() === 'b-next', `got ${last()}`);
+
+reset();
+key({ key: 'ArrowLeft', code: 'ArrowLeft' });
+check('bare ← -> 上一题', last() === 'b-prev', `got ${last()}`);
 
 /* ---- 5. focus helpers ---- */
 key({ key: 'i', code: 'KeyI', altKey: true });
@@ -214,8 +226,8 @@ setTimeout(() => {
   setTimeout(() => {
     const idleChips = chips();
     check(
-      'the letter drops its modifier once you leave the box',
-      ['1', '2', '3', '4', 'B'].every((k) => idleChips.includes(k)),
+      'out of the box, 下一题 / 上一题 show the arrows',
+      ['1', '2', '3', '→', '←'].every((k) => idleChips.includes(k)),
       idleChips.join(' ')
     );
 

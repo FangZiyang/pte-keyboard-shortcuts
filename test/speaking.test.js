@@ -93,10 +93,10 @@ check('bare 3 scores (no text field to type into)', last() === 'b-ai', `got ${la
 window.dispatchEvent(new window.Event('resize'));
 setTimeout(() => {
   const chips = [...document.querySelectorAll('.ynwac-sc-chip')].map((c) => c.textContent);
-  check('chips cover 1-5 plus 跳过准备', ['1', '2', '3', '4', '5', '7'].every((k) => chips.includes(k)), chips.join(' '));
+  check('chips cover 1-3, →, 5 plus 跳过准备', ['1', '2', '3', '→', '5', '7'].every((k) => chips.includes(k)), chips.join(' '));
   check('提交 gets no chip at all here', !chips.includes('S'), chips.join(' '));
   check('重置 falls back to its letter', chips.includes('R'), chips.join(' '));
-  check('上一题 shows the letter it always had', chips.includes('B'), chips.join(' '));
+  check('上一题 shows ←', chips.includes('←'), chips.join(' '));
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

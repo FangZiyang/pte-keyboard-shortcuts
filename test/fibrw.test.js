@@ -88,7 +88,7 @@ function regrade() {
   const panel = document.querySelector('.ynwac-sc-modal');
   const key = (opts) => document.body.dispatchEvent(new window.KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...opts }));
   key({ key: '/', code: 'Slash', altKey: true });
-  const exportBtn = document.querySelector('.ynwac-sc-export');
+  const exportBtn = document.querySelector('.ynwac-sc-export-fibrw');
   check('the panel offers an export button', !!exportBtn);
   exportBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   await wait(100);
